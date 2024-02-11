@@ -1,7 +1,11 @@
 # Proof of Audit
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/c888dd91-7201-4051-a7c9-193656295b9a/deploy-status)](https://app.netlify.com/sites/proof-of-audit/deploys)
+
 This project aims to provide a way to issue attestations of audits, leveraging
 the [Verax Attestation Registry](https://www.ver.ax/).
+
+The demo webapp is available at [audit.alainnicolas.fr](https://audit.alainnicolas.fr/).
 
 ## Disclaimer
 
