@@ -1,16 +1,21 @@
 import './Footer.css';
 import {FaGithub} from 'react-icons/fa';
+import LogoVerax from "../assets/logo-verax.svg";
 
 const Footer = () => {
     return (
         <footer className="footer">
             <div className="footer-content">
                 <p className={'copyright'}>Made with <span role="img" aria-label="heart">❤️</span> by {' '}
-                    <a className={'underline white-link'} href="https://alainnicolas.fr/en/" target="_blank"
+                    <a className={'underline white'} href="https://alainnicolas.fr/en/" target="_blank"
                        rel="noopener noreferrer">Alain Nicolas</a>
                 </p>
-                <a href="https://github.com/alainncls/proof-of-audit" target="_blank" rel="noopener noreferrer"
-                   className="white-link"><FaGithub size={24}/></a>
+                <div>
+                    <a href="https://www.ver.ax" target="_blank" rel="noopener noreferrer"
+                       className="link"><img src={LogoVerax} alt={'Logo Verax'} height={24}/></a>
+                    <a href="https://github.com/alainncls/proof-of-audit" target="_blank" rel="noopener noreferrer"
+                       className="link white"><FaGithub size={24}/></a>
+                </div>
             </div>
         </footer>
     );

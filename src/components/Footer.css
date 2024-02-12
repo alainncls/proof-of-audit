@@ -24,7 +24,11 @@
     margin: 0;
 }
 
-.white-link {
+.link {
+    padding: 0 10px;
+}
+
+.white {
     color: #fff;
 }
 
