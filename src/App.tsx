@@ -5,11 +5,16 @@ import {useAccount} from "wagmi";
 import ConnectButton from "./components/ConnectButton.tsx";
 import Header from "./components/Header.tsx";
 import Footer from "./components/Footer.tsx";
+import {waitForTransactionReceipt} from "viem/actions";
+import {Hex} from "viem";
+import {wagmiConfig} from "./wagmiConfig.ts";
 
 function App() {
     const [inputValues, setInputValues] = useState({commitHash: '', repoUrl: '', eip712Signature: ''});
     const [errors, setErrors] = useState({commitHash: '', repoUrl: '', eip712Signature: ''});
     const [veraxSdk, setVeraxSdk] = useState<VeraxSdk>();
+    const [txHash, setTxHash] = useState<Hex>();
+    const [attestationId, setAttestationId] = useState<Hex>();
 
     const {address, chainId} = useAccount();
 
@@ -33,6 +38,8 @@ function App() {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (Object.values(errors).every(error => error === '')) {
+            setTxHash(undefined);
+            setAttestationId(undefined);
             await issueAttestation();
         }
     };
@@ -64,7 +71,7 @@ function App() {
     const issueAttestation = async () => {
         if (address && veraxSdk) {
             try {
-                const receipt = await veraxSdk.portal.attest(
+                let receipt = await veraxSdk.portal.attest(
                     portalId,
                     {
                         schemaId,
@@ -79,7 +86,11 @@ function App() {
                     [],
                 );
                 if (receipt.transactionHash) {
-                    alert(`Transaction sent with hash = ${receipt.transactionHash}`);
+                    setTxHash(receipt.transactionHash)
+                    receipt = await waitForTransactionReceipt(wagmiConfig.getClient(), {
+                        hash: receipt.transactionHash,
+                    });
+                    setAttestationId(receipt.logs?.[0].topics[1])
                 } else {
                     alert(`Oops, something went wrong!`);
                 }
@@ -100,6 +111,10 @@ function App() {
         return inputValues.commitHash === '' || inputValues.repoUrl === '' || inputValues.eip712Signature === ''
     }
 
+    const truncateHexString = (hexString: string) => {
+        return `${hexString.slice(0, 6)}••••${hexString.slice(hexString.length - 4, hexString.length)}`
+    }
+
     return (
         <>
             <Header/>
@@ -118,6 +133,13 @@ function App() {
                     {errors.eip712Signature && <div className="error">{errors.eip712Signature}</div>}
                     <button type="submit" disabled={!address || !veraxSdk || isError() || isEmpty()}>Submit</button>
                 </form>
+                {txHash && <div className={'message'}>Transaction Hash: <a
+                  href={`${chainId === 59144 ? 'https://lineascan.build/tx/' : 'https://goerli.lineascan.build/tx/'}${txHash}`}
+                  target="_blank" rel="noopener noreferrer">{truncateHexString(txHash)}</a></div>}
+                {txHash && !attestationId && <div className={'message pending'}>Transaction pending...</div>}
+                {attestationId && <div className={'message success'}>Attestation ID: <a
+                  href={`${chainId === 59144 ? 'https://explorer.ver.ax/linea/attestations/' : 'https://explorer.ver.ax/linea-testnet/attestations/'}${attestationId}`}
+                  target="_blank" rel="noopener noreferrer">{truncateHexString(attestationId)}</a></div>}
             </div>
             <Footer/>
         </>

@@ -70,3 +70,18 @@ button[type="submit"]:disabled {
     width: 100%;
     text-align: center;
 }
+
+.message {
+    color: #000000;
+    padding-top: 20px;
+    text-align: center;
+}
+
+.success {
+    color: #008000;
+    font-weight: bold;
+}
+
+.pending {
+    color: #FF8C00;
+}
