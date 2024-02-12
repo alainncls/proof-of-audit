@@ -1,3 +1,7 @@
+import './ConnectButton.css';
+
 export default function ConnectButton() {
-    return <w3m-button />
+    return <div className={'connect-button-container'}>
+        <w3m-button/>
+    </div>
 }

@@ -3,6 +3,8 @@ import './App.css'
 import {VeraxSdk} from "@verax-attestation-registry/verax-sdk";
 import {useAccount} from "wagmi";
 import ConnectButton from "./components/ConnectButton.tsx";
+import Header from "./components/Header.tsx";
+import Footer from "./components/Footer.tsx";
 
 function App() {
     const [inputValues, setInputValues] = useState({commitHash: '', repoUrl: '', eip712Signature: ''});
@@ -90,21 +92,34 @@ function App() {
         }
     };
 
+    const isError = () => {
+        return errors.commitHash !== '' || errors.repoUrl !== '' || errors.eip712Signature !== ''
+    }
+
+    const isEmpty = () => {
+        return inputValues.commitHash === '' || inputValues.repoUrl === '' || inputValues.eip712Signature === ''
+    }
+
     return (
         <>
-            <ConnectButton/>
-            <form onSubmit={handleSubmit}>
-                <input type="text" name="commitHash" value={inputValues.commitHash} onChange={handleChange}
-                       placeholder="Commit Hash"/>
-                {errors.commitHash && <div className="error">{errors.commitHash}</div>}
-                <input type="text" name="repoUrl" value={inputValues.repoUrl} onChange={handleChange}
-                       placeholder="GitHub Repo URL"/>
-                {errors.repoUrl && <div className="error">{errors.repoUrl}</div>}
-                <input type="text" name="eip712Signature" value={inputValues.eip712Signature} onChange={handleChange}
-                       placeholder="EIP712 Signature"/>
-                {errors.eip712Signature && <div className="error">{errors.eip712Signature}</div>}
-                <button type="submit">Submit</button>
-            </form>
+            <Header/>
+            <div className={'main-container'}>
+                <ConnectButton/>
+                <form onSubmit={handleSubmit}>
+                    <input type="text" name="commitHash" value={inputValues.commitHash} onChange={handleChange}
+                           placeholder="Commit Hash"/>
+                    {errors.commitHash && <div className="error">{errors.commitHash}</div>}
+                    <input type="text" name="repoUrl" value={inputValues.repoUrl} onChange={handleChange}
+                           placeholder="GitHub Repo URL"/>
+                    {errors.repoUrl && <div className="error">{errors.repoUrl}</div>}
+                    <input type="text" name="eip712Signature" value={inputValues.eip712Signature}
+                           onChange={handleChange}
+                           placeholder="EIP712 Signature"/>
+                    {errors.eip712Signature && <div className="error">{errors.eip712Signature}</div>}
+                    <button type="submit" disabled={!address || !veraxSdk || isError() || isEmpty()}>Submit</button>
+                </form>
+            </div>
+            <Footer/>
         </>
     );
 }

@@ -6,6 +6,9 @@ import {linea, lineaTestnet, mainnet} from 'wagmi/chains'
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query'
 import {ReactNode} from "react";
 
+import LineaMainnetIcon from "./assets/linea-mainnet.svg";
+import LineaTestnetIcon from "./assets/linea-testnet.svg";
+
 const queryClient = new QueryClient()
 const projectId = '68b9b40fbc3c45a909f03f864745955e'
 const metadata = {
@@ -25,7 +28,13 @@ const config = defaultWagmiConfig({
 createWeb3Modal({
     wagmiConfig: config,
     projectId,
-    enableAnalytics: true
+    enableAnalytics: true,
+    themeMode: 'light',
+    defaultChain: lineaTestnet,
+    chainImages: {
+        59144: LineaMainnetIcon,
+        59140: LineaTestnetIcon,
+    },
 })
 
 interface Web3ModalProviderProps {
