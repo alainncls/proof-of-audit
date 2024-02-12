@@ -131,7 +131,7 @@ function App() {
                            onChange={handleChange}
                            placeholder="EIP712 Signature"/>
                     {errors.eip712Signature && <div className="error">{errors.eip712Signature}</div>}
-                    <button type="submit" disabled={!address || !veraxSdk || isError() || isEmpty()}>Submit</button>
+                    <button type="submit" disabled={!address || !veraxSdk || isError() || isEmpty()}>Issue attestation</button>
                 </form>
                 {txHash && <div className={'message'}>Transaction Hash: <a
                   href={`${chainId === 59144 ? 'https://lineascan.build/tx/' : 'https://goerli.lineascan.build/tx/'}${txHash}`}
