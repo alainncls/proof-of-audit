@@ -6,7 +6,7 @@ const Footer = () => {
     return (
         <footer className="footer">
             <div className="footer-content">
-                <p className={'copyright'}>Made with <span role="img" aria-label="heart">❤️</span> by {' '}
+                <p className={'copyright'}>Made with <span>❤️</span> by {' '}
                     <a className={'underline white'} href="https://alainnicolas.fr/en/" target="_blank"
                        rel="noopener noreferrer">Alain Nicolas</a>
                 </p>

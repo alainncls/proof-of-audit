@@ -33,6 +33,12 @@ form {
     align-items: center;
 }
 
+@media only screen and (max-width: 600px) {
+    form {
+        width: 80%;
+    }
+}
+
 input[type="text"] {
     width: 100%;
     padding: 10px;
