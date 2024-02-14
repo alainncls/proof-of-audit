@@ -6,19 +6,19 @@ import ConnectButton from "./components/ConnectButton.tsx";
 import Header from "./components/Header.tsx";
 import Footer from "./components/Footer.tsx";
 import {waitForTransactionReceipt} from "viem/actions";
-import {Hex} from "viem";
+import {Hex, isAddress} from "viem";
 import {wagmiConfig} from "./wagmiConfig.ts";
 
 function App() {
-    const [inputValues, setInputValues] = useState({commitHash: '', repoUrl: '', eip712Signature: ''});
-    const [errors, setErrors] = useState({commitHash: '', repoUrl: '', eip712Signature: ''});
+    const [inputValues, setInputValues] = useState({commitHash: '', repoUrl: '', contractAddress: ''});
+    const [errors, setErrors] = useState({commitHash: '', repoUrl: '', contractAddress: ''});
     const [veraxSdk, setVeraxSdk] = useState<VeraxSdk>();
     const [txHash, setTxHash] = useState<Hex>();
     const [attestationId, setAttestationId] = useState<Hex>();
 
     const {address, chainId} = useAccount();
 
-    const schemaId = "0x7a8e589a49ae82796725224b6bcdb9b911a97911f9a1c06a7fed9f23ab07bec2"
+    const schemaId = "0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71"
     const portalId = "0x2fafe2c217be096e09b64c49825fe46b7c3e33b2"
 
     useEffect(() => {
@@ -57,9 +57,9 @@ function App() {
                     error = 'GitHub repo URL is not valid. It should be in the format https://github.com/username/repo.';
                 }
                 break;
-            case 'eip712Signature':
-                if (!/^0x[a-fA-F0-9]{130}$/.test(value)) {
-                    error = 'EIP712 Signature is not valid. It should be a 130 character string starting with 0x.';
+            case 'contractAddress':
+                if (!isAddress(value)) {
+                    error = 'Contract address is not valid. It must be a valid Ethereum address.';
                 }
                 break;
             default:
@@ -76,11 +76,10 @@ function App() {
                     {
                         schemaId,
                         expirationDate: Math.floor(Date.now() / 1000) + 2592000,
-                        subject: address, // TODO: who/what should be attested? Project address? Commit hash?
+                        subject: inputValues.contractAddress,
                         attestationData: [{
                             commitHash: inputValues.commitHash,
                             repoUrl: inputValues.repoUrl,
-                            eip712Signature: inputValues.eip712Signature
                         }],
                     },
                     [],
@@ -104,11 +103,11 @@ function App() {
     };
 
     const isError = () => {
-        return errors.commitHash !== '' || errors.repoUrl !== '' || errors.eip712Signature !== ''
+        return errors.commitHash !== '' || errors.repoUrl !== '' || errors.contractAddress !== ''
     }
 
     const isEmpty = () => {
-        return inputValues.commitHash === '' || inputValues.repoUrl === '' || inputValues.eip712Signature === ''
+        return inputValues.commitHash === '' || inputValues.repoUrl === '' || inputValues.contractAddress === ''
     }
 
     const truncateHexString = (hexString: string) => {
@@ -127,10 +126,10 @@ function App() {
                     <input type="text" name="repoUrl" value={inputValues.repoUrl} onChange={handleChange}
                            placeholder="GitHub Repo URL"/>
                     {errors.repoUrl && <div className="error">{errors.repoUrl}</div>}
-                    <input type="text" name="eip712Signature" value={inputValues.eip712Signature}
+                    <input type="text" name="contractAddress" value={inputValues.contractAddress}
                            onChange={handleChange}
-                           placeholder="EIP712 Signature"/>
-                    {errors.eip712Signature && <div className="error">{errors.eip712Signature}</div>}
+                           placeholder="Smart contract address"/>
+                    {errors.contractAddress && <div className="error">{errors.contractAddress}</div>}
                     <button type="submit" disabled={!address || !veraxSdk || isError() || isEmpty()}>Issue attestation</button>
                 </form>
                 {txHash && <div className={'message'}>Transaction Hash: <a
