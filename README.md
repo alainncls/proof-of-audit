@@ -5,7 +5,7 @@
 This project aims to provide a way to issue attestations of audits, leveraging
 the [Verax Attestation Registry](https://www.ver.ax/).
 
-The demo webapp is available at [audit.alainnicolas.fr](https://audit.alainnicolas.fr/).
+The demo webapp is available at [audit.examples.ver.ax](https://audit.examples.ver.ax/).
 
 ## Disclaimer
 
