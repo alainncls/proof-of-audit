@@ -111,7 +111,7 @@ function App() {
     }
 
     const truncateHexString = (hexString: string) => {
-        return `${hexString.slice(0, 6)}••••${hexString.slice(hexString.length - 4, hexString.length)}`
+        return `${hexString.slice(0, 7)}...${hexString.slice(hexString.length - 5, hexString.length)}`
     }
 
     return (
