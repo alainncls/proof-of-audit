@@ -27,11 +27,11 @@ npm run dev
 2. Repository URL: `https://github.com/alainncls/strava-segments-to-nfts-dapp`
 3. Smart contract address: `0x2fafe2c217be096e09b64c49825fe46b7c3e33b2`
 
-## Portal on Linea testnet
+## Portal on Linea Sepolia
 
-[`0x2fafe2c217be096e09b64c49825fe46b7c3e33b2`](https://explorer.ver.ax/linea-testnet/portals/0x2fafe2c217be096e09b64c49825fe46b7c3e33b2)
+[`0xbb92965c718852a8dc1b6e930239de4e08d93e60`](https://explorer.ver.ax/linea-sepolia/portals/0xbb92965c718852a8dc1b6e930239de4e08d93e60)
 
-## Schema on Linea testnet
+## Schema on Linea Sepolia
 
-[`0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71`](https://explorer.ver.ax/linea-testnet/schemas/0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71)  
+[`0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71`](https://explorer.ver.ax/linea-sepolia/schemas/0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71)  
 `(string commitHash, string repoUrl)`

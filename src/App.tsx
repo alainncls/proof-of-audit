@@ -19,12 +19,12 @@ function App() {
     const {address, chainId} = useAccount();
 
     const schemaId = "0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71"
-    const portalId = "0x2fafe2c217be096e09b64c49825fe46b7c3e33b2"
+    const portalId = "0xbb92965c718852a8dc1b6e930239de4e08d93e60"
 
     useEffect(() => {
         if (chainId && address) {
             const sdkConf =
-                chainId === 59144 ? VeraxSdk.DEFAULT_LINEA_MAINNET_FRONTEND : VeraxSdk.DEFAULT_LINEA_TESTNET_FRONTEND;
+                chainId === 59144 ? VeraxSdk.DEFAULT_LINEA_MAINNET_FRONTEND : VeraxSdk.DEFAULT_LINEA_SEPOLIA_FRONTEND;
             const sdk = new VeraxSdk(sdkConf, address);
             setVeraxSdk(sdk);
         }
@@ -120,12 +120,12 @@ function App() {
             <div className={'main-container'}>
                 <ConnectButton/>
                 <form onSubmit={handleSubmit}>
-                    <input type="text" name="commitHash" value={inputValues.commitHash} onChange={handleChange}
-                           placeholder="Commit Hash"/>
-                    {errors.commitHash && <div className="error">{errors.commitHash}</div>}
                     <input type="text" name="repoUrl" value={inputValues.repoUrl} onChange={handleChange}
                            placeholder="GitHub Repo URL"/>
                     {errors.repoUrl && <div className="error">{errors.repoUrl}</div>}
+                    <input type="text" name="commitHash" value={inputValues.commitHash} onChange={handleChange}
+                           placeholder="Commit Hash"/>
+                    {errors.commitHash && <div className="error">{errors.commitHash}</div>}
                     <input type="text" name="contractAddress" value={inputValues.contractAddress}
                            onChange={handleChange}
                            placeholder="Smart contract address"/>
@@ -133,11 +133,11 @@ function App() {
                     <button type="submit" disabled={!address || !veraxSdk || isError() || isEmpty()}>Issue attestation</button>
                 </form>
                 {txHash && <div className={'message'}>Transaction Hash: <a
-                  href={`${chainId === 59144 ? 'https://lineascan.build/tx/' : 'https://goerli.lineascan.build/tx/'}${txHash}`}
+                  href={`${chainId === 59144 ? 'https://lineascan.build/tx/' : 'https://sepolia.lineascan.build/tx/'}${txHash}`}
                   target="_blank" rel="noopener noreferrer">{truncateHexString(txHash)}</a></div>}
                 {txHash && !attestationId && <div className={'message pending'}>Transaction pending...</div>}
                 {attestationId && <div className={'message success'}>Attestation ID: <a
-                  href={`${chainId === 59144 ? 'https://explorer.ver.ax/linea/attestations/' : 'https://explorer.ver.ax/linea-testnet/attestations/'}${attestationId}`}
+                  href={`${chainId === 59144 ? 'https://explorer.ver.ax/linea/attestations/' : 'https://explorer.ver.ax/linea-sepolia/attestations/'}${attestationId}`}
                   target="_blank" rel="noopener noreferrer">{truncateHexString(attestationId)}</a></div>}
             </div>
             <Footer/>

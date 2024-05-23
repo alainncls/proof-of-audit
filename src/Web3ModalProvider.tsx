@@ -1,12 +1,12 @@
 import {createWeb3Modal} from '@web3modal/wagmi/react'
 
 import {WagmiProvider} from 'wagmi'
-import {lineaTestnet} from 'wagmi/chains'
+import {lineaSepolia} from 'wagmi/chains'
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query'
 import {ReactNode} from "react";
 
 import LineaMainnetIcon from "./assets/linea-mainnet.svg";
-import LineaTestnetIcon from "./assets/linea-testnet.svg";
+import LineaSepoliaIcon from "./assets/linea-sepolia.svg";
 import {wagmiConfig, walletConnectProjectId} from "./wagmiConfig.ts";
 
 const queryClient = new QueryClient()
@@ -16,10 +16,10 @@ createWeb3Modal({
     projectId: walletConnectProjectId,
     enableAnalytics: true,
     themeMode: 'light',
-    defaultChain: lineaTestnet,
+    defaultChain: lineaSepolia,
     chainImages: {
         59144: LineaMainnetIcon,
-        59140: LineaTestnetIcon,
+        59141: LineaSepoliaIcon,
     },
 })
 
