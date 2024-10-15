@@ -1,6 +1,5 @@
-import {ChangeEvent, FormEvent, useEffect, useState} from 'react'
+import {ChangeEvent, FormEvent, useState} from 'react'
 import './App.css'
-import {VeraxSdk} from "@verax-attestation-registry/verax-sdk";
 import {useAccount} from "wagmi";
 import ConnectButton from "./components/ConnectButton.tsx";
 import Header from "./components/Header.tsx";
@@ -8,27 +7,17 @@ import Footer from "./components/Footer.tsx";
 import {waitForTransactionReceipt} from "viem/actions";
 import {Hex, isAddress} from "viem";
 import {wagmiConfig} from "./wagmiConfig.ts";
+import {useVeraxSdk} from "./hooks/useVeraxSdk.ts";
+import {PORTAL_ID, SCHEMA_ID} from "./utils/constants.ts";
 
 function App() {
     const [inputValues, setInputValues] = useState({commitHash: '', repoUrl: '', contractAddress: ''});
     const [errors, setErrors] = useState({commitHash: '', repoUrl: '', contractAddress: ''});
-    const [veraxSdk, setVeraxSdk] = useState<VeraxSdk>();
     const [txHash, setTxHash] = useState<Hex>();
     const [attestationId, setAttestationId] = useState<Hex>();
 
     const {address, chainId} = useAccount();
-
-    const schemaId = "0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71"
-    const portalId = "0xbb92965c718852a8dc1b6e930239de4e08d93e60"
-
-    useEffect(() => {
-        if (chainId && address) {
-            const sdkConf =
-                chainId === 59144 ? VeraxSdk.DEFAULT_LINEA_MAINNET_FRONTEND : VeraxSdk.DEFAULT_LINEA_SEPOLIA_FRONTEND;
-            const sdk = new VeraxSdk(sdkConf, address);
-            setVeraxSdk(sdk);
-        }
-    }, [chainId, address]);
+    const {veraxSdk} = useVeraxSdk(chainId, address);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setInputValues({...inputValues, [e.target.name]: e.target.value});
@@ -72,9 +61,9 @@ function App() {
         if (address && veraxSdk) {
             try {
                 let receipt = await veraxSdk.portal.attest(
-                    portalId,
+                    PORTAL_ID,
                     {
-                        schemaId,
+                        schemaId: SCHEMA_ID,
                         expirationDate: Math.floor(Date.now() / 1000) + 2592000,
                         subject: inputValues.contractAddress,
                         attestationData: [{
@@ -130,7 +119,8 @@ function App() {
                            onChange={handleChange}
                            placeholder="Smart contract address"/>
                     {errors.contractAddress && <div className="error">{errors.contractAddress}</div>}
-                    <button type="submit" disabled={!address || !veraxSdk || isError() || isEmpty()}>Issue attestation</button>
+                    <button type="submit" disabled={!address || !veraxSdk || isError() || isEmpty()}>Issue attestation
+                    </button>
                 </form>
                 {txHash && <div className={'message'}>Transaction Hash: <a
                   href={`${chainId === 59144 ? 'https://lineascan.build/tx/' : 'https://sepolia.lineascan.build/tx/'}${txHash}`}
