@@ -30,33 +30,6 @@ const App = () => {
     }));
   }, []);
 
-  const handleSubmit = useCallback(
-    async (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (Object.values(formState.errors).every((error) => error === '')) {
-        setTxHash(undefined);
-        setAttestationId(undefined);
-        await issueAttestation();
-      }
-    },
-    [formState.errors],
-  );
-
-  const validateField = (name: string, value: string) => {
-    switch (name) {
-      case 'commitHash':
-        return /^[0-9a-f]{40}$/.test(value) ? '' : 'Commit hash is not valid.';
-      case 'repoUrl':
-        return /^https:\/\/github\.com\/[^/]+\/[^/]+$/.test(value)
-          ? ''
-          : 'GitHub repo URL is not valid.';
-      case 'contractAddress':
-        return isAddress(value) ? '' : 'Contract address is not valid.';
-      default:
-        return '';
-    }
-  };
-
   const issueAttestation = useCallback(async () => {
     if (address && veraxSdk) {
       try {
@@ -92,6 +65,33 @@ const App = () => {
       }
     }
   }, [address, veraxSdk, formState.inputValues]);
+
+  const handleSubmit = useCallback(
+    async (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (Object.values(formState.errors).every((error) => error === '')) {
+        setTxHash(undefined);
+        setAttestationId(undefined);
+        await issueAttestation();
+      }
+    },
+    [formState.errors, issueAttestation],
+  );
+
+  const validateField = (name: string, value: string) => {
+    switch (name) {
+      case 'commitHash':
+        return /^[0-9a-f]{40}$/.test(value) ? '' : 'Commit hash is not valid.';
+      case 'repoUrl':
+        return /^https:\/\/github\.com\/[^/]+\/[^/]+$/.test(value)
+          ? ''
+          : 'GitHub repo URL is not valid.';
+      case 'contractAddress':
+        return isAddress(value) ? '' : 'Contract address is not valid.';
+      default:
+        return '';
+    }
+  };
 
   const isError = useMemo(
     () => Object.values(formState.errors).some((error) => error !== ''),
