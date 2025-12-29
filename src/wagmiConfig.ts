@@ -1,27 +1,52 @@
-import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
-import { linea, lineaSepolia, mainnet } from 'wagmi/chains';
 import { http } from 'wagmi';
+import { linea, lineaSepolia } from 'wagmi/chains';
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
+import type { AppKitNetwork } from '@reown/appkit/networks';
 
-export const walletConnectProjectId = '68b9b40fbc3c45a909f03f864745955e';
-const infuraApiKey: string = '2VbuXFYphoB468fyFPinOmis7o5';
+const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+const infuraApiKey = import.meta.env.VITE_INFURA_API_KEY;
 
-const metadata = {
+if (!walletConnectProjectId) {
+  throw new Error('Missing VITE_WALLETCONNECT_PROJECT_ID environment variable');
+}
+
+if (!infuraApiKey) {
+  throw new Error('Missing VITE_INFURA_API_KEY environment variable');
+}
+
+export { walletConnectProjectId };
+
+export const metadata = {
   name: 'Proof of Audit',
   description: 'Issue attestation of audits',
   url: 'https://audit.examples.ver.ax',
   icons: ['https://audit.examples.ver.ax/verax-logo-circle.svg'],
 };
-const chains = [lineaSepolia, linea, mainnet] as const;
-export const wagmiConfig = defaultWagmiConfig({
-  chains,
+
+// Cast to mutable array for appkit compatibility
+export const chains: [AppKitNetwork, ...AppKitNetwork[]] = [
+  lineaSepolia,
+  linea,
+];
+
+export const wagmiAdapter = new WagmiAdapter({
+  networks: chains,
   transports: {
-    [linea.id]: http(`https://linea-mainnet.infura.io/v3/${infuraApiKey}`),
+    [linea.id]: http(`https://linea-mainnet.infura.io/v3/${infuraApiKey}`, {
+      timeout: 10_000,
+      retryCount: 3,
+      retryDelay: 1_000,
+    }),
     [lineaSepolia.id]: http(
       `https://linea-sepolia.infura.io/v3/${infuraApiKey}`,
+      {
+        timeout: 10_000,
+        retryCount: 3,
+        retryDelay: 1_000,
+      },
     ),
-    [mainnet.id]: http(`https://mainnet.infura.io/v3/${infuraApiKey}`),
   },
   projectId: walletConnectProjectId,
-  metadata,
-  enableCoinbase: false,
 });
+
+export const wagmiConfig = wagmiAdapter.wagmiConfig;

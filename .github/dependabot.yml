@@ -1,0 +1,28 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      production-dependencies:
+        dependency-type: production
+        update-types:
+          - patch
+    ignore:
+      # Ignore major version updates for wagmi ecosystem (requires manual migration)
+      - dependency-name: wagmi
+        update-types: [version-update:semver-major]
+      # Ignore verax-sdk updates (pinned intentionally)
+      - dependency-name: "@verax-attestation-registry/verax-sdk"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
