@@ -16,9 +16,6 @@ updates:
         update-types:
           - patch
     ignore:
-      # Ignore major version updates for wagmi ecosystem (requires manual migration)
-      - dependency-name: wagmi
-        update-types: [version-update:semver-major]
       # Ignore verax-sdk updates (pinned intentionally)
       - dependency-name: "@verax-attestation-registry/verax-sdk"
 

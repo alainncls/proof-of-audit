@@ -40,7 +40,7 @@ Anyone can then verify on the Verax Explorer that a contract has been audited.
 ## 🛠 Tech Stack
 
 | Technology                                                                          | Version | Purpose                     |
-|-------------------------------------------------------------------------------------|---------|-----------------------------|
+| ----------------------------------------------------------------------------------- | ------- | --------------------------- |
 | [React](https://react.dev/)                                                         | 19.x    | UI framework                |
 | [Vite](https://vitejs.dev/)                                                         | 7.x     | Build tool                  |
 | [wagmi](https://wagmi.sh/)                                                          | 3.x     | React hooks for Ethereum    |
@@ -114,10 +114,10 @@ cp .env.example .env
 ```
 
 | Variable                        | Required | Description                                                      |
-|---------------------------------|----------|------------------------------------------------------------------|
-| `VITE_WALLETCONNECT_PROJECT_ID` | ✅ Yes    | From [cloud.walletconnect.com](https://cloud.walletconnect.com/) |
-| `VITE_INFURA_API_KEY`           | ✅ Yes    | From [infura.io](https://infura.io/)                             |
-| `VITE_GA_ID`                    | ❌ No     | Google Analytics Measurement ID                                  |
+| ------------------------------- | -------- | ---------------------------------------------------------------- |
+| `VITE_WALLETCONNECT_PROJECT_ID` | ✅ Yes   | From [cloud.walletconnect.com](https://cloud.walletconnect.com/) |
+| `VITE_INFURA_API_KEY`           | ✅ Yes   | From [infura.io](https://infura.io/)                             |
+| `VITE_GA_ID`                    | ❌ No    | Google Analytics Measurement ID                                  |
 
 ### Installation & Development
 
@@ -134,7 +134,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ### Available Scripts
 
 | Script               | Description                    |
-|----------------------|--------------------------------|
+| -------------------- | ------------------------------ |
 | `npm run dev`        | Start development server       |
 | `npm run build`      | Build for production           |
 | `npm run preview`    | Preview production build       |
@@ -149,7 +149,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ## 🌐 Supported Networks
 
 | Network       | Type       | Chain ID |
-|---------------|------------|----------|
+| ------------- | ---------- | -------- |
 | Linea Sepolia | Testnet    | 59141    |
 | Linea Mainnet | Production | 59144    |
 
@@ -167,7 +167,7 @@ The app defaults to **Linea Sepolia** for safe testing.
 ### Linea Sepolia (Testnet)
 
 | Component  | Address / ID                                                                                                                                                                             |
-|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Portal** | [`0xbb92965c718852a8dc1b6e930239de4e08d93e60`](https://explorer.ver.ax/linea-sepolia/portals/0xbb92965c718852a8dc1b6e930239de4e08d93e60)                                                 |
 | **Schema** | [`0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71`](https://explorer.ver.ax/linea-sepolia/schemas/0x59ffe1d5bdbd99d418fc1dba03b136176ca52da322cab38fed6f29c2ca29bd71) |
 
@@ -178,7 +178,7 @@ The app defaults to **Linea Sepolia** for safe testing.
 ```
 
 | Field        | Type     | Description                        |
-|--------------|----------|------------------------------------|
+| ------------ | -------- | ---------------------------------- |
 | `commitHash` | `string` | Git commit SHA (40 hex characters) |
 | `repoUrl`    | `string` | GitHub repository URL              |
 
@@ -195,7 +195,7 @@ Attestations expire after **30 days**. This is configurable in [`src/utils/const
 For testing on Linea Sepolia:
 
 | Field            | Example Value                                               |
-|------------------|-------------------------------------------------------------|
+| ---------------- | ----------------------------------------------------------- |
 | GitHub Repo URL  | `https://github.com/alainncls/strava-segments-to-nfts-dapp` |
 | Commit Hash      | `37f8ecd53a64ba2395b7de0a8d7ecb0dbfdced64`                  |
 | Contract Address | `0x2fafe2c217be096e09b64c49825fe46b7c3e33b2`                |
@@ -216,7 +216,7 @@ For testing on Linea Sepolia:
 ## 📚 Resources
 
 | Resource            | Link                                                                               |
-|---------------------|------------------------------------------------------------------------------------|
+| ------------------- | ---------------------------------------------------------------------------------- |
 | Verax Documentation | [docs.ver.ax](https://docs.ver.ax/)                                                |
 | Verax Explorer      | [explorer.ver.ax](https://explorer.ver.ax/)                                        |
 | Verax SDK           | [npm package](https://www.npmjs.com/package/@verax-attestation-registry/verax-sdk) |
