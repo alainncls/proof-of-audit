@@ -23,6 +23,14 @@
   gap: var(--space-lg);
 }
 
+.form-loading {
+  min-height: 20rem;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

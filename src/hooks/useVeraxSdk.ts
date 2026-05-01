@@ -7,7 +7,7 @@ import {
 } from '../utils/constants.ts';
 
 export const useVeraxSdk = (chainId?: number, address?: Address) => {
-  const veraxSdk = useMemo(() => {
+  return useMemo(() => {
     if (!chainId || !address) {
       return undefined;
     }
@@ -26,6 +26,4 @@ export const useVeraxSdk = (chainId?: number, address?: Address) => {
 
     return new VeraxSdk(sdkConf, address);
   }, [chainId, address]);
-
-  return { veraxSdk };
 };
