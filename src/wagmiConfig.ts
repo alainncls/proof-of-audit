@@ -4,14 +4,9 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import type { AppKitNetwork } from '@reown/appkit/networks';
 
 const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
-const infuraApiKey = import.meta.env.VITE_INFURA_API_KEY;
 
 if (!walletConnectProjectId) {
   throw new Error('Missing VITE_WALLETCONNECT_PROJECT_ID environment variable');
-}
-
-if (!infuraApiKey) {
-  throw new Error('Missing VITE_INFURA_API_KEY environment variable');
 }
 
 export { walletConnectProjectId };
@@ -29,21 +24,19 @@ export const chains: [AppKitNetwork, ...AppKitNetwork[]] = [
   linea,
 ];
 
+const rpcTransportOptions = {
+  timeout: 10_000,
+  retryCount: 3,
+  retryDelay: 1_000,
+};
+
 export const wagmiAdapter = new WagmiAdapter({
   networks: chains,
   transports: {
-    [linea.id]: http(`https://linea-mainnet.infura.io/v3/${infuraApiKey}`, {
-      timeout: 10_000,
-      retryCount: 3,
-      retryDelay: 1_000,
-    }),
+    [linea.id]: http(linea.rpcUrls.default.http[0], rpcTransportOptions),
     [lineaSepolia.id]: http(
-      `https://linea-sepolia.infura.io/v3/${infuraApiKey}`,
-      {
-        timeout: 10_000,
-        retryCount: 3,
-        retryDelay: 1_000,
-      },
+      lineaSepolia.rpcUrls.default.http[0],
+      rpcTransportOptions,
     ),
   },
   projectId: walletConnectProjectId,

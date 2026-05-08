@@ -12,13 +12,32 @@ export const ATTESTATION_VALIDITY_SECONDS = 30 * 24 * 60 * 60; // 2_592_000
 // Chain IDs
 export const LINEA_MAINNET_CHAIN_ID = linea.id;
 export const LINEA_SEPOLIA_CHAIN_ID = lineaSepolia.id;
+
+export const LINEA_MAINNET_ATTESTATION_REGISTRY_ADDRESS: Address =
+  '0x3de3893aa4Cdea029e84e75223a152FD08315138';
+export const LINEA_SEPOLIA_ATTESTATION_REGISTRY_ADDRESS: Address =
+  '0xDaf3C3632327343f7df0Baad2dc9144fa4e1001F';
+
 const SUPPORTED_LINEA_CHAIN_IDS = new Set<number>([
   LINEA_MAINNET_CHAIN_ID,
   LINEA_SEPOLIA_CHAIN_ID,
 ]);
 
+const ATTESTATION_REGISTRY_ADDRESSES_BY_CHAIN_ID: Record<number, Address> = {
+  [LINEA_MAINNET_CHAIN_ID]: LINEA_MAINNET_ATTESTATION_REGISTRY_ADDRESS,
+  [LINEA_SEPOLIA_CHAIN_ID]: LINEA_SEPOLIA_ATTESTATION_REGISTRY_ADDRESS,
+};
+
 export const isSupportedLineaChainId = (chainId?: number): chainId is number =>
   typeof chainId === 'number' && SUPPORTED_LINEA_CHAIN_IDS.has(chainId);
+
+export const getAttestationRegistryAddress = (
+  chainId?: number,
+): Address | undefined => {
+  return typeof chainId === 'number'
+    ? ATTESTATION_REGISTRY_ADDRESSES_BY_CHAIN_ID[chainId]
+    : undefined;
+};
 
 // Block explorer URLs
 export const getBlockExplorerTxUrl = (chainId: number, txHash: string) => {
