@@ -23,7 +23,7 @@ createAppKit({
   metadata,
   defaultNetwork: lineaSepolia,
   features: {
-    analytics: true,
+    analytics: false,
     history: false,
     onramp: false,
     receive: false,
