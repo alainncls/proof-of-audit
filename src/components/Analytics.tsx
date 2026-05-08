@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 const GA_ID = import.meta.env.VITE_GA_ID;
 const GOOGLE_ANALYTICS_SCRIPT_ID = 'google-analytics-script';
+const ANALYTICS_DELAY_MS = 5_000;
 
 const scheduleIdleWork = (callback: () => void): (() => void) => {
   const requestIdleCallback =
@@ -18,6 +19,33 @@ const scheduleIdleWork = (callback: () => void): (() => void) => {
   return () => window.clearTimeout(timeoutId);
 };
 
+const schedulePostLoadIdleWork = (callback: () => void): (() => void) => {
+  let cancelIdleWork: (() => void) | undefined;
+  let delayHandle: number | undefined;
+
+  const scheduleDelayedIdleWork = () => {
+    delayHandle = window.setTimeout(() => {
+      cancelIdleWork = scheduleIdleWork(callback);
+    }, ANALYTICS_DELAY_MS);
+  };
+
+  if (document.readyState === 'complete') {
+    scheduleDelayedIdleWork();
+  } else {
+    window.addEventListener('load', scheduleDelayedIdleWork, { once: true });
+  }
+
+  return () => {
+    window.removeEventListener('load', scheduleDelayedIdleWork);
+
+    if (delayHandle) {
+      window.clearTimeout(delayHandle);
+    }
+
+    cancelIdleWork?.();
+  };
+};
+
 declare global {
   interface Window {
     dataLayer?: unknown[];
@@ -31,7 +59,7 @@ const Analytics = () => {
       return;
     }
 
-    return scheduleIdleWork(() => {
+    return schedulePostLoadIdleWork(() => {
       window.dataLayer = window.dataLayer ?? [];
       window.gtag = (...args: unknown[]) => {
         window.dataLayer?.push(args);

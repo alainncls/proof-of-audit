@@ -9,6 +9,46 @@
   max-width: 100vw;
 }
 
+.intro {
+  width: 100%;
+  max-width: 42rem;
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.intro-title {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.intro-copy {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+.tool-start {
+  width: 100%;
+  max-width: 32rem;
+  padding: var(--space-xl);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  align-items: stretch;
+}
+
+.tool-start-copy {
+  margin: 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 /* Form styles */
 .form {
   width: 100%;
@@ -16,7 +56,7 @@
   padding: var(--space-xl);
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
@@ -78,7 +118,7 @@
 
 .form-error {
   font-size: 0.75rem;
-  color: var(--color-error);
+  color: var(--color-error-text);
   display: flex;
   align-items: center;
   gap: var(--space-xs);
@@ -103,12 +143,38 @@
     opacity var(--transition-fast);
 }
 
+.start-button {
+  padding: var(--space-md) var(--space-lg);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-secondary)
+  );
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
 .submit-button:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: var(--shadow-glow);
 }
 
+.start-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
 .submit-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.start-button:active {
   transform: translateY(0);
 }
 
@@ -178,7 +244,7 @@
 .status-message.error {
   background: rgb(239 68 68 / 0.1);
   border: 1px solid var(--color-error);
-  color: var(--color-error);
+  color: var(--color-error-text);
 }
 
 .status-message a {
@@ -198,6 +264,10 @@
   }
 
   .form {
+    padding: var(--space-lg);
+  }
+
+  .tool-start {
     padding: var(--space-lg);
   }
 }
