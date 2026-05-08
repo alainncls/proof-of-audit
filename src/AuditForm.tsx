@@ -1,5 +1,6 @@
 import {
   type ChangeEvent,
+  type FocusEvent,
   type FormEvent,
   memo,
   useCallback,
@@ -19,6 +20,7 @@ import {
   PORTAL_ID,
   SCHEMA_ID,
 } from './utils/constants.ts';
+import { extractAttestationIdFromReceipt } from './utils/attestationReceipt.ts';
 
 type FormValues = {
   commitHash: string;
@@ -103,6 +105,7 @@ type AuditFormFieldProps = FormFieldConfig & {
   value: string;
   error: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onBlur: (e: FocusEvent<HTMLInputElement>) => void;
 };
 
 const AuditFormField = memo(function AuditFormField({
@@ -115,6 +118,7 @@ const AuditFormField = memo(function AuditFormField({
   value,
   error,
   onChange,
+  onBlur,
 }: Readonly<AuditFormFieldProps>) {
   const errorId = `${name}-error`;
 
@@ -129,6 +133,7 @@ const AuditFormField = memo(function AuditFormField({
         name={name}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         placeholder={placeholder}
         className={`form-input ${error ? 'has-error' : ''}`}
         aria-invalid={Boolean(error)}
@@ -169,6 +174,16 @@ const AuditForm = () => {
     const fieldName = name as FormFieldName;
 
     setInputValues((prev) => ({ ...prev, [fieldName]: value }));
+
+    setErrors((prev) =>
+      prev[fieldName] ? { ...prev, [fieldName]: '' } : prev,
+    );
+  }, []);
+
+  const handleBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const fieldName = name as FormFieldName;
+
     setErrors((prev) => ({
       ...prev,
       [fieldName]: validateField(fieldName, value),
@@ -215,9 +230,19 @@ const AuditForm = () => {
         { hash: receipt.transactionHash },
       );
 
-      const attestationId = finalReceipt.logs?.[0]?.topics[1] as
-        | Hex
-        | undefined;
+      if (finalReceipt.status !== 'success') {
+        setStatus({
+          type: 'error',
+          txHash: receipt.transactionHash,
+          errorMessage: 'Transaction failed',
+        });
+        return;
+      }
+
+      const attestationId = extractAttestationIdFromReceipt(
+        chainId,
+        finalReceipt.logs,
+      );
 
       if (attestationId) {
         setStatus({
@@ -295,6 +320,7 @@ const AuditForm = () => {
             value={inputValues[field.name]}
             error={errors[field.name]}
             onChange={handleChange}
+            onBlur={handleBlur}
           />
         ))}
 

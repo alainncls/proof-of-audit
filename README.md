@@ -103,7 +103,6 @@ src/
 - **Node.js** 22.21.1 (see [`.nvmrc`](.nvmrc) or use `nvm use`)
 - **npm** (comes with Node.js)
 - A WalletConnect Project ID
-- An Infura API Key
 
 ### Environment Variables
 
@@ -116,7 +115,6 @@ cp .env.example .env
 | Variable                        | Required | Description                                                      |
 | ------------------------------- | -------- | ---------------------------------------------------------------- |
 | `VITE_WALLETCONNECT_PROJECT_ID` | ✅ Yes   | From [cloud.walletconnect.com](https://cloud.walletconnect.com/) |
-| `VITE_INFURA_API_KEY`           | ✅ Yes   | From [infura.io](https://infura.io/)                             |
 | `VITE_GA_ID`                    | ❌ No    | Google Analytics Measurement ID                                  |
 
 ### Installation & Development

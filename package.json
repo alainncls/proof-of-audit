@@ -11,6 +11,7 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
+    "security:verify": "node --experimental-strip-types scripts/verify-security-fixes.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
