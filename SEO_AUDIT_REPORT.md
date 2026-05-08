@@ -107,18 +107,25 @@ Validated against `http://127.0.0.1:4173/` after `npm run build` and `npm run pr
 
 ## Post-Deployment Comparison
 
-This section must be completed after the commit is deployed to production.
+The fixes were merged to `main`, deployed to production, and re-audited against <https://audit.examples.ver.ax/>.
 
 | Mode    | Baseline Performance | Post-Deploy Performance | Baseline LCP | Post-Deploy LCP | Baseline Unused JS | Post-Deploy Unused JS |
 | ------- | -------------------: | ----------------------: | -----------: | --------------: | -----------------: | --------------------: |
-| Mobile  |                   70 |                 Pending |         5.2s |         Pending |            465 KiB |               Pending |
-| Desktop |                   94 |                 Pending |         1.5s |         Pending |            465 KiB |               Pending |
+| Mobile  |                   70 |                      98 |         5.2s |            1.4s |            465 KiB |                31 KiB |
+| Desktop |                   94 |                     100 |         1.5s |            0.4s |            465 KiB |                31 KiB |
 
-Production checks still pending after deployment:
+Post-deployment Lighthouse scores:
+
+| Mode    | Performance | Accessibility | Best Practices | SEO | Agentic Browsing |  FCP |  LCP | TBT | CLS | Speed Index |
+| ------- | ----------: | ------------: | -------------: | --: | ---------------: | ---: | ---: | --: | --: | ----------: |
+| Mobile  |          98 |           100 |            100 | 100 |              100 | 1.4s | 1.4s | 0ms |   0 |        3.9s |
+| Desktop |         100 |           100 |            100 | 100 |              100 | 0.4s | 0.4s | 0ms |   0 |        0.4s |
+
+Production checks after deployment:
 
 - `https://audit.examples.ver.ax/robots.txt` returns `200`
 - `https://audit.examples.ver.ax/sitemap.xml` returns `200`
 - `https://audit.examples.ver.ax/llms.txt` returns `200`
-- Canonical URL present
-- JSON-LD present
-- Hashed assets return immutable cache headers
+- Canonical URL is present
+- JSON-LD is present in the HTML source
+- Hashed JavaScript assets return `cache-control: public,max-age=31536000,immutable`
