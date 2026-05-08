@@ -24,6 +24,11 @@ createAppKit({
   defaultNetwork: lineaSepolia,
   features: {
     analytics: true,
+    history: false,
+    onramp: false,
+    receive: false,
+    send: false,
+    swaps: false,
   },
   chainImages: {
     59144: LineaMainnetIcon,

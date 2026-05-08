@@ -1,4 +1,10 @@
-import { ChangeEvent, FormEvent, useCallback, useState } from 'react';
+import {
+  type ChangeEvent,
+  type FormEvent,
+  memo,
+  useCallback,
+  useState,
+} from 'react';
 import { useAccount } from 'wagmi';
 import ConnectButton from './components/ConnectButton.tsx';
 import { waitForTransactionReceipt } from 'viem/actions';
@@ -9,8 +15,7 @@ import {
   ATTESTATION_VALIDITY_SECONDS,
   getBlockExplorerTxUrl,
   getVeraxExplorerAttestationUrl,
-  LINEA_MAINNET_CHAIN_ID,
-  LINEA_SEPOLIA_CHAIN_ID,
+  isSupportedLineaChainId,
   PORTAL_ID,
   SCHEMA_ID,
 } from './utils/constants.ts';
@@ -27,6 +32,17 @@ type FormErrors = {
   contractAddress: string;
 };
 
+type FormFieldName = keyof FormValues;
+
+type FormFieldConfig = {
+  name: FormFieldName;
+  label: string;
+  type: 'text' | 'url';
+  placeholder: string;
+  autoComplete: string;
+  spellCheck?: boolean;
+};
+
 type StatusState = {
   type: 'idle' | 'pending' | 'success' | 'error';
   txHash?: Hex;
@@ -37,7 +53,33 @@ type StatusState = {
 const COMMIT_HASH_PATTERN = /^[0-9a-f]{40}$/;
 const GITHUB_REPO_URL_PATTERN = /^https:\/\/github\.com\/[^/]+\/[^/]+$/;
 
-const validateField = (name: keyof FormValues, value: string): string => {
+const FORM_FIELDS: readonly FormFieldConfig[] = [
+  {
+    name: 'repoUrl',
+    label: 'GitHub Repository URL',
+    type: 'url',
+    placeholder: 'https://github.com/owner/repo',
+    autoComplete: 'url',
+  },
+  {
+    name: 'commitHash',
+    label: 'Commit Hash',
+    type: 'text',
+    placeholder: '37f8ecd53a64ba2395b7de0a8d7ecb0dbfdced64',
+    autoComplete: 'off',
+    spellCheck: false,
+  },
+  {
+    name: 'contractAddress',
+    label: 'Smart Contract Address',
+    type: 'text',
+    placeholder: '0x...',
+    autoComplete: 'off',
+    spellCheck: false,
+  },
+];
+
+const validateField = (name: FormFieldName, value: string): string => {
   switch (name) {
     case 'commitHash':
       return COMMIT_HASH_PATTERN.test(value)
@@ -57,6 +99,52 @@ const validateField = (name: keyof FormValues, value: string): string => {
 const truncateHexString = (hexString: string): string =>
   `${hexString.slice(0, 7)}...${hexString.slice(-5)}`;
 
+type AuditFormFieldProps = FormFieldConfig & {
+  value: string;
+  error: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+};
+
+const AuditFormField = memo(function AuditFormField({
+  name,
+  label,
+  type,
+  placeholder,
+  autoComplete,
+  spellCheck,
+  value,
+  error,
+  onChange,
+}: Readonly<AuditFormFieldProps>) {
+  const errorId = `${name}-error`;
+
+  return (
+    <div className="form-group">
+      <label htmlFor={name} className="form-label">
+        {label}
+      </label>
+      <input
+        id={name}
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`form-input ${error ? 'has-error' : ''}`}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
+        autoComplete={autoComplete}
+        spellCheck={spellCheck}
+      />
+      {error ? (
+        <div id={errorId} className="form-error" role="alert">
+          {error}
+        </div>
+      ) : null}
+    </div>
+  );
+});
+
 const AuditForm = () => {
   const [inputValues, setInputValues] = useState<FormValues>({
     commitHash: '',
@@ -72,16 +160,18 @@ const AuditForm = () => {
 
   const { address, chainId } = useAccount();
   const veraxSdk = useVeraxSdk(chainId, address);
+  const { commitHash, repoUrl, contractAddress } = inputValues;
 
-  const isValidChain =
-    chainId === LINEA_MAINNET_CHAIN_ID || chainId === LINEA_SEPOLIA_CHAIN_ID;
+  const isValidChain = isSupportedLineaChainId(chainId);
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setInputValues((prev) => ({ ...prev, [name]: value }));
+    const fieldName = name as FormFieldName;
+
+    setInputValues((prev) => ({ ...prev, [fieldName]: value }));
     setErrors((prev) => ({
       ...prev,
-      [name]: validateField(name as keyof FormValues, value),
+      [fieldName]: validateField(fieldName, value),
     }));
   }, []);
 
@@ -99,11 +189,11 @@ const AuditForm = () => {
         {
           schemaId: SCHEMA_ID,
           expirationDate,
-          subject: inputValues.contractAddress,
+          subject: contractAddress,
           attestationData: [
             {
-              commitHash: inputValues.commitHash,
-              repoUrl: inputValues.repoUrl,
+              commitHash,
+              repoUrl,
             },
           ],
         },
@@ -147,7 +237,7 @@ const AuditForm = () => {
         e instanceof Error ? e.message : 'An unexpected error occurred';
       setStatus({ type: 'error', errorMessage });
     }
-  }, [address, veraxSdk, chainId, inputValues]);
+  }, [address, chainId, commitHash, contractAddress, repoUrl, veraxSdk]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -155,26 +245,27 @@ const AuditForm = () => {
 
       // Validate all fields before submit
       const newErrors: FormErrors = {
-        commitHash: validateField('commitHash', inputValues.commitHash),
-        repoUrl: validateField('repoUrl', inputValues.repoUrl),
-        contractAddress: validateField(
-          'contractAddress',
-          inputValues.contractAddress,
-        ),
+        commitHash: validateField('commitHash', commitHash),
+        repoUrl: validateField('repoUrl', repoUrl),
+        contractAddress: validateField('contractAddress', contractAddress),
       };
       setErrors(newErrors);
 
-      const hasErrors = Object.values(newErrors).some((error) => error !== '');
-      if (hasErrors) return;
+      const hasValidationErrors = Boolean(
+        newErrors.commitHash || newErrors.repoUrl || newErrors.contractAddress,
+      );
+      if (hasValidationErrors) return;
 
       setStatus({ type: 'idle' });
       await issueAttestation();
     },
-    [inputValues, issueAttestation],
+    [commitHash, contractAddress, issueAttestation, repoUrl],
   );
 
-  const hasErrors = Object.values(errors).some((error) => error !== '');
-  const isEmpty = Object.values(inputValues).some((value) => value === '');
+  const hasErrors = Boolean(
+    errors.commitHash || errors.repoUrl || errors.contractAddress,
+  );
+  const isEmpty = !commitHash || !repoUrl || !contractAddress;
   const transactionStatusClass =
     status.type === 'error' ? 'error' : status.type;
 
@@ -190,87 +281,22 @@ const AuditForm = () => {
     <>
       <ConnectButton />
 
-      {address && !isValidChain && (
+      {address && !isValidChain ? (
         <div className="status-message error" role="alert">
           Please switch to Linea Mainnet or Linea Sepolia
         </div>
-      )}
+      ) : null}
 
       <form onSubmit={handleSubmit} className="form" noValidate>
-        <div className="form-group">
-          <label htmlFor="repoUrl" className="form-label">
-            GitHub Repository URL
-          </label>
-          <input
-            id="repoUrl"
-            type="url"
-            name="repoUrl"
-            value={inputValues.repoUrl}
+        {FORM_FIELDS.map((field) => (
+          <AuditFormField
+            key={field.name}
+            {...field}
+            value={inputValues[field.name]}
+            error={errors[field.name]}
             onChange={handleChange}
-            placeholder="https://github.com/owner/repo"
-            className={`form-input ${errors.repoUrl ? 'has-error' : ''}`}
-            aria-invalid={!!errors.repoUrl}
-            aria-describedby={errors.repoUrl ? 'repoUrl-error' : undefined}
-            autoComplete="url"
           />
-          {errors.repoUrl && (
-            <div id="repoUrl-error" className="form-error" role="alert">
-              {errors.repoUrl}
-            </div>
-          )}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="commitHash" className="form-label">
-            Commit Hash
-          </label>
-          <input
-            id="commitHash"
-            type="text"
-            name="commitHash"
-            value={inputValues.commitHash}
-            onChange={handleChange}
-            placeholder="37f8ecd53a64ba2395b7de0a8d7ecb0dbfdced64"
-            className={`form-input ${errors.commitHash ? 'has-error' : ''}`}
-            aria-invalid={!!errors.commitHash}
-            aria-describedby={
-              errors.commitHash ? 'commitHash-error' : undefined
-            }
-            autoComplete="off"
-            spellCheck="false"
-          />
-          {errors.commitHash && (
-            <div id="commitHash-error" className="form-error" role="alert">
-              {errors.commitHash}
-            </div>
-          )}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="contractAddress" className="form-label">
-            Smart Contract Address
-          </label>
-          <input
-            id="contractAddress"
-            type="text"
-            name="contractAddress"
-            value={inputValues.contractAddress}
-            onChange={handleChange}
-            placeholder="0x..."
-            className={`form-input ${errors.contractAddress ? 'has-error' : ''}`}
-            aria-invalid={!!errors.contractAddress}
-            aria-describedby={
-              errors.contractAddress ? 'contractAddress-error' : undefined
-            }
-            autoComplete="off"
-            spellCheck="false"
-          />
-          {errors.contractAddress && (
-            <div id="contractAddress-error" className="form-error" role="alert">
-              {errors.contractAddress}
-            </div>
-          )}
-        </div>
+        ))}
 
         <button
           type="submit"
@@ -282,7 +308,7 @@ const AuditForm = () => {
         </button>
       </form>
 
-      {status.txHash && chainId && (
+      {status.txHash && chainId ? (
         <div
           className={`status-message ${transactionStatusClass}`}
           role="status"
@@ -297,9 +323,9 @@ const AuditForm = () => {
             {truncateHexString(status.txHash)}
           </a>
         </div>
-      )}
+      ) : null}
 
-      {status.type === 'pending' && status.txHash && (
+      {status.type === 'pending' && status.txHash ? (
         <div
           className="status-message pending"
           role="status"
@@ -307,9 +333,9 @@ const AuditForm = () => {
         >
           Waiting for confirmation...
         </div>
-      )}
+      ) : null}
 
-      {status.type === 'success' && status.attestationId && chainId && (
+      {status.type === 'success' && status.attestationId && chainId ? (
         <div
           className="status-message success"
           role="status"
@@ -324,13 +350,13 @@ const AuditForm = () => {
             {truncateHexString(status.attestationId)}
           </a>
         </div>
-      )}
+      ) : null}
 
-      {status.type === 'error' && status.errorMessage && (
+      {status.type === 'error' && status.errorMessage ? (
         <div className="status-message error" role="alert">
           {status.errorMessage}
         </div>
-      )}
+      ) : null}
     </>
   );
 };

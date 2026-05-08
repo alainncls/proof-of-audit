@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { VeraxSdk } from '@verax-attestation-registry/verax-sdk';
 import { type Address } from 'viem';
 import {
+  isSupportedLineaChainId,
   LINEA_MAINNET_CHAIN_ID,
-  LINEA_SEPOLIA_CHAIN_ID,
 } from '../utils/constants.ts';
 
 export const useVeraxSdk = (chainId?: number, address?: Address) => {
@@ -12,10 +12,7 @@ export const useVeraxSdk = (chainId?: number, address?: Address) => {
       return undefined;
     }
 
-    if (
-      chainId !== LINEA_MAINNET_CHAIN_ID &&
-      chainId !== LINEA_SEPOLIA_CHAIN_ID
-    ) {
+    if (!isSupportedLineaChainId(chainId)) {
       return undefined;
     }
 

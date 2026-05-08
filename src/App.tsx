@@ -6,18 +6,18 @@ import Header from './components/Header.tsx';
 
 const WalletApp = lazy(() => import('./WalletApp.tsx'));
 
+const walletAppFallback = (
+  <div className="form form-loading" role="status" aria-live="polite">
+    Loading wallet tools...
+  </div>
+);
+
 const App = () => {
   return (
     <>
       <Header />
       <main className="main-container">
-        <Suspense
-          fallback={
-            <div className="form form-loading" role="status" aria-live="polite">
-              Loading wallet tools...
-            </div>
-          }
-        >
+        <Suspense fallback={walletAppFallback}>
           <WalletApp />
         </Suspense>
       </main>

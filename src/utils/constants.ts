@@ -12,6 +12,13 @@ export const ATTESTATION_VALIDITY_SECONDS = 30 * 24 * 60 * 60; // 2_592_000
 // Chain IDs
 export const LINEA_MAINNET_CHAIN_ID = linea.id;
 export const LINEA_SEPOLIA_CHAIN_ID = lineaSepolia.id;
+const SUPPORTED_LINEA_CHAIN_IDS = new Set<number>([
+  LINEA_MAINNET_CHAIN_ID,
+  LINEA_SEPOLIA_CHAIN_ID,
+]);
+
+export const isSupportedLineaChainId = (chainId?: number): chainId is number =>
+  typeof chainId === 'number' && SUPPORTED_LINEA_CHAIN_IDS.has(chainId);
 
 // Block explorer URLs
 export const getBlockExplorerTxUrl = (chainId: number, txHash: string) => {
