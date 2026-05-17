@@ -17,12 +17,12 @@
   "dependencies": {
     "@reown/appkit": "^1.8.19",
     "@reown/appkit-adapter-wagmi": "^1.8.19",
-    "@tanstack/react-query": "^5.100.9",
+    "@tanstack/react-query": "^5.100.10",
     "@verax-attestation-registry/verax-sdk": "5.4.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "viem": "^2.48.11",
-    "wagmi": "^3.6.11"
+    "wagmi": "^3.6.15"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
