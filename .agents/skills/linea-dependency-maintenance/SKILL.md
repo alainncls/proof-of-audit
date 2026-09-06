@@ -35,6 +35,12 @@ hiding remaining risk.
 ## Policy
 
 - Treat release-age and cooldown rules as hard gates. Compute exact cutoff timestamps before selecting versions.
+- When a newer release is genuinely broken for the repository, hold the package at the last version that works
+  instead of shipping a workaround for it. A workaround for an upstream bug tends to be narrow, easy to break, and
+  silent when it does — the repository ends up carrying a defect it cannot see. Record the ceiling where the tooling
+  can enforce it (in this repo, `.github/dependency-holds.json`), with the reason, the evidence, and what has to be
+  true upstream before it is lifted. Clearing a hold is a human decision made in review: raise the ceiling and let
+  the normal validation prove the new version works.
 - In pnpm repos, `minimumReleaseAge` is a maturity window in minutes. Treat the configured `minimumReleaseAgeExclude`
   list as read-only: respect the existing entries, but never add or widen it to push a fresher version through — the
   maturity window is a hard gate, not a hurdle to bypass.
@@ -172,13 +178,17 @@ node <skill-dir>/scripts/eligible-actions --days 7
 
 The helper scans every external `uses:` pin and, for each action, reports the newest same-major release older than the
 cutoff plus its exact commit SHA. It needs an authenticated `gh` CLI. The action gate is 7 days; adjust
-`--days`/`--minutes` only if repo policy differs.
+`--days`/`--minutes` only if repo policy differs. When the same action is pinned to different SHAs across files, the
+report sets `conflictingPins` and lists each variant — reconcile those before bumping.
 
 Triage each pin:
 
 - Safe now: a newer same-major tag whose release is older than the cutoff. Bump both the SHA and the version comment.
 - Blocked (too fresh): the only newer tag is still inside the maturity window. Keep the current pin, note it, and
   re-check after the release matures. Never bump to a release younger than the cutoff.
+- Pin drift: `conflictingPins` is true (different SHAs for the same action path). Align every workflow file to one SHA
+  and comment before applying any bump suggestion.
+- Comment drift: `commentDrift` is true (same SHA but different version comments). Align comments before bumping.
 - Major migration: a semver-major bump (for example a runner or Node baseline change). Track it in an issue instead of
   bumping now, unless the user approves the major.
 
@@ -204,13 +214,20 @@ Run the narrowest meaningful checks first, then broaden by blast radius:
 - for GitHub Actions changes: confirm every external `uses:` is a 40-character commit SHA with a matching version
   comment, and that each bumped release cleared the age gate
 
+A green build is not a green runtime. When the repo ships container images or a bundler that traces its own output
+(Next.js standalone, Vite SSR, esbuild bundles), the build step can succeed while the artifact is missing a module that
+is only needed once the process starts. If the repo has an image build and a smoke test, run them as part of validation
+rather than leaving that class of breakage to post-merge CI.
+
 If a command cannot run, report why. If CI fails, inspect the actual logs and classify the failure as introduced by the
 update, exposed baseline debt, or external/non-actionable.
 
 ## Open The PR
 
-Open the PR only after local validation is green. Opening a PR is an outward-facing action, so commit the work on a
-dedicated branch, then pause and confirm with the user before pushing and creating the PR.
+Open the PR only after local validation is green.
+
+In interactive mode (a user is present), opening a PR is an outward-facing action: commit the work on a dedicated
+branch, then pause and confirm with the user before pushing and creating the PR.
 
 - Branch from the repo's base branch and commit with the repository's Conventional Commit format. Match the update set:
   - npm/pnpm only: stage manifest and lockfile changes together. Use the repo-approved scope (for example
@@ -221,14 +238,29 @@ dedicated branch, then pause and confirm with the user before pushing and creati
     explicitly.
 - Open a PR.
 
+In autonomous mode (an unattended run, such as a scheduled CI pipeline), never commit, push, create remote branches,
+or open PRs yourself. Write the PR body and a machine-readable summary to the locations the harness specifies, leave
+the changes uncommitted in the worktree for the pipeline's policy gates, and stop. The pipeline owns commit, gating,
+and PR creation; it opens the PR ready for review (non-draft) and never auto-merges it. Keep the PR body minimal:
+a heading plus a few count bullets — no validation section, no package names, no lists of bumped or deferred
+packages. Per-package details and proposals belong in the machine-readable summary.
+
 Open English follow-up issues for deferred major upgrades or blocked migration streams. Each issue should include
 official docs, current and target versions, expected code areas, migration plan, validation, rollout risk, and rollback
-notes.
+notes. In autonomous mode, do not create the issues — include each proposed issue with the same content in the report
+so a human can open it later.
 
 ## Stop And Ask
 
-Pause before contract deployments, public API breakage, package-manager migration, broad refactors, invalid override
-trees, or CI failures that suggest a cross-cutting regression.
+Some situations need a human decision: contract deployments, public API breakage, package-manager migration, broad
+refactors, invalid override trees, or CI failures that suggest a cross-cutting regression.
+
+- Interactive mode: pause and ask the user before continuing.
+- Autonomous mode: there is no user to ask, so default to the conservative action. If a single candidate causes the
+  problem, revert that candidate and defer it in the report. Hard-fail the run — stop, report a blocked status with
+  the reason through the harness's failure channel, and produce no PR — when the blocker is cross-cutting: a
+  package-manager migration is required, the override tree is invalid, or validation fails in a way that a single
+  revert cannot isolate.
 
 ## Additional Resources
 
