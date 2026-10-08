@@ -4,12 +4,13 @@ import {
   type FormEvent,
   memo,
   useCallback,
+  useRef,
   useState,
 } from 'react';
 import { useAccount } from 'wagmi';
 import ConnectButton from './components/ConnectButton.tsx';
 import { waitForTransactionReceipt } from 'viem/actions';
-import { type Hex, isAddress } from 'viem';
+import { type Address, type Hex, isAddress } from 'viem';
 import { wagmiConfig } from './wagmiConfig.ts';
 import { useVeraxSdk } from './hooks/useVeraxSdk.ts';
 import {
@@ -17,6 +18,8 @@ import {
   getBlockExplorerTxUrl,
   getVeraxExplorerAttestationUrl,
   isSupportedLineaChainId,
+  LINEA_MAINNET_CHAIN_ID,
+  LINEA_SEPOLIA_CHAIN_ID,
   PORTAL_ID,
   SCHEMA_ID,
 } from './utils/constants.ts';
@@ -45,11 +48,19 @@ type FormFieldConfig = {
   spellCheck?: boolean;
 };
 
+type SubmissionOrigin = {
+  account: Address;
+  chainId: number;
+  txExplorerUrl?: string;
+  attestationExplorerUrl?: string;
+};
+
 type StatusState = {
   type: 'idle' | 'pending' | 'success' | 'error';
   txHash?: Hex;
   attestationId?: Hex;
   errorMessage?: string;
+  origin?: SubmissionOrigin;
 };
 
 const COMMIT_HASH_PATTERN = /^[0-9a-f]{40}$/;
@@ -100,6 +111,16 @@ const validateField = (name: FormFieldName, value: string): string => {
 
 const truncateHexString = (hexString: string): string =>
   `${hexString.slice(0, 7)}...${hexString.slice(-5)}`;
+
+const lineaChainLabel = (chainId: number): string => {
+  if (chainId === LINEA_MAINNET_CHAIN_ID) {
+    return 'Linea Mainnet';
+  }
+  if (chainId === LINEA_SEPOLIA_CHAIN_ID) {
+    return 'Linea Sepolia';
+  }
+  return `chain ${chainId}`;
+};
 
 type AuditFormFieldProps = FormFieldConfig & {
   value: string;
@@ -162,6 +183,7 @@ const AuditForm = () => {
     contractAddress: '',
   });
   const [status, setStatus] = useState<StatusState>({ type: 'idle' });
+  const inFlightRef = useRef(false);
 
   const { address, chainId } = useAccount();
   const veraxSdk = useVeraxSdk(chainId, address);
@@ -190,85 +212,17 @@ const AuditForm = () => {
     }));
   }, []);
 
-  const issueAttestation = useCallback(async () => {
-    if (!address || !veraxSdk || !chainId) return;
-
-    setStatus({ type: 'pending' });
-
-    try {
-      const expirationDate =
-        Math.floor(Date.now() / 1000) + ATTESTATION_VALIDITY_SECONDS;
-
-      const receipt = await veraxSdk.portal.attest(
-        PORTAL_ID,
-        {
-          schemaId: SCHEMA_ID,
-          expirationDate,
-          subject: contractAddress,
-          attestationData: [
-            {
-              commitHash,
-              repoUrl,
-            },
-          ],
-        },
-        [],
-      );
-
-      if (!receipt.transactionHash) {
-        setStatus({
-          type: 'error',
-          errorMessage: 'Transaction failed - no hash received',
-        });
-        return;
-      }
-
-      setStatus({ type: 'pending', txHash: receipt.transactionHash });
-
-      const finalReceipt = await waitForTransactionReceipt(
-        wagmiConfig.getClient(),
-        { hash: receipt.transactionHash },
-      );
-
-      if (finalReceipt.status !== 'success') {
-        setStatus({
-          type: 'error',
-          txHash: receipt.transactionHash,
-          errorMessage: 'Transaction failed',
-        });
-        return;
-      }
-
-      const attestationId = extractAttestationIdFromReceipt(
-        chainId,
-        finalReceipt.logs,
-      );
-
-      if (attestationId) {
-        setStatus({
-          type: 'success',
-          txHash: receipt.transactionHash,
-          attestationId,
-        });
-      } else {
-        setStatus({
-          type: 'error',
-          txHash: receipt.transactionHash,
-          errorMessage: 'Could not extract attestation ID from transaction',
-        });
-      }
-    } catch (e) {
-      const errorMessage =
-        e instanceof Error ? e.message : 'An unexpected error occurred';
-      setStatus({ type: 'error', errorMessage });
-    }
-  }, [address, chainId, commitHash, contractAddress, repoUrl, veraxSdk]);
-
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      // Validate all fields before submit
+      // Disabling the button is not a mutex: React applies it only after
+      // render. A second submit can run before that unless this ref is set
+      // synchronously, before any await.
+      if (inFlightRef.current) {
+        return;
+      }
+
       const newErrors: FormErrors = {
         commitHash: validateField('commitHash', commitHash),
         repoUrl: validateField('repoUrl', repoUrl),
@@ -279,12 +233,161 @@ const AuditForm = () => {
       const hasValidationErrors = Boolean(
         newErrors.commitHash || newErrors.repoUrl || newErrors.contractAddress,
       );
-      if (hasValidationErrors) return;
+      if (hasValidationErrors) {
+        return;
+      }
 
-      setStatus({ type: 'idle' });
-      await issueAttestation();
+      inFlightRef.current = true;
+
+      const capturedAccount = address;
+      const capturedChainId = chainId;
+      const capturedSdk = veraxSdk;
+      const capturedSubject = contractAddress;
+      const capturedCommitHash = commitHash;
+      const capturedRepoUrl = repoUrl;
+      const capturedPortalId = PORTAL_ID;
+      const origin: SubmissionOrigin | undefined =
+        capturedAccount && typeof capturedChainId === 'number'
+          ? { account: capturedAccount, chainId: capturedChainId }
+          : undefined;
+
+      setStatus({ type: 'pending', origin });
+
+      try {
+        if (!isSupportedLineaChainId(capturedChainId)) {
+          setStatus({
+            type: 'error',
+            origin,
+            errorMessage:
+              'Please switch to Linea Mainnet or Linea Sepolia before issuing an attestation.',
+          });
+          return;
+        }
+
+        const supportedChainId =
+          capturedChainId === LINEA_MAINNET_CHAIN_ID
+            ? LINEA_MAINNET_CHAIN_ID
+            : LINEA_SEPOLIA_CHAIN_ID;
+
+        if (!capturedAccount || !capturedSdk) {
+          setStatus({
+            type: 'error',
+            origin,
+            errorMessage:
+              'Connect a wallet on Linea Mainnet or Linea Sepolia before issuing an attestation.',
+          });
+          return;
+        }
+
+        const receiptClient = wagmiConfig.getClient({
+          chainId: supportedChainId,
+        });
+
+        if (!receiptClient) {
+          setStatus({
+            type: 'error',
+            origin,
+            errorMessage:
+              'Could not open a wallet client for the submitting Linea network. Switch to that network and try again.',
+          });
+          return;
+        }
+
+        const expirationDate =
+          Math.floor(Date.now() / 1000) + ATTESTATION_VALIDITY_SECONDS;
+
+        const receipt = await capturedSdk.portal.attest(
+          capturedPortalId,
+          {
+            schemaId: SCHEMA_ID,
+            expirationDate,
+            subject: capturedSubject,
+            attestationData: [
+              {
+                commitHash: capturedCommitHash,
+                repoUrl: capturedRepoUrl,
+              },
+            ],
+          },
+          [],
+        );
+
+        if (!receipt.transactionHash) {
+          setStatus({
+            type: 'error',
+            origin,
+            errorMessage: 'Transaction failed - no hash received',
+          });
+          return;
+        }
+
+        const pendingOrigin: SubmissionOrigin = {
+          account: capturedAccount,
+          chainId: supportedChainId,
+          txExplorerUrl: getBlockExplorerTxUrl(
+            supportedChainId,
+            receipt.transactionHash,
+          ),
+        };
+
+        setStatus({
+          type: 'pending',
+          txHash: receipt.transactionHash,
+          origin: pendingOrigin,
+        });
+
+        const finalReceipt = await waitForTransactionReceipt(receiptClient, {
+          hash: receipt.transactionHash,
+        });
+
+        if (finalReceipt.status !== 'success') {
+          setStatus({
+            type: 'error',
+            txHash: receipt.transactionHash,
+            origin: pendingOrigin,
+            errorMessage: 'Transaction failed',
+          });
+          return;
+        }
+
+        const attestationId = extractAttestationIdFromReceipt(
+          supportedChainId,
+          finalReceipt.logs,
+        );
+
+        if (!attestationId) {
+          setStatus({
+            type: 'error',
+            txHash: receipt.transactionHash,
+            origin: pendingOrigin,
+            errorMessage: 'Could not extract attestation ID from transaction',
+          });
+          return;
+        }
+
+        setStatus({
+          type: 'success',
+          txHash: receipt.transactionHash,
+          attestationId,
+          origin: {
+            ...pendingOrigin,
+            attestationExplorerUrl: getVeraxExplorerAttestationUrl(
+              supportedChainId,
+              attestationId,
+            ),
+          },
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred';
+        setStatus({ type: 'error', origin, errorMessage });
+      } finally {
+        inFlightRef.current = false;
+      }
     },
-    [commitHash, contractAddress, issueAttestation, repoUrl],
+    [address, chainId, commitHash, contractAddress, repoUrl, veraxSdk],
   );
 
   const hasErrors = Boolean(
@@ -334,7 +437,7 @@ const AuditForm = () => {
         </button>
       </form>
 
-      {status.txHash && chainId ? (
+      {status.txHash && status.origin?.txExplorerUrl ? (
         <div
           className={`status-message ${transactionStatusClass}`}
           role="status"
@@ -342,7 +445,7 @@ const AuditForm = () => {
         >
           Transaction:{' '}
           <a
-            href={getBlockExplorerTxUrl(chainId, status.txHash)}
+            href={status.origin.txExplorerUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -361,7 +464,9 @@ const AuditForm = () => {
         </div>
       ) : null}
 
-      {status.type === 'success' && status.attestationId && chainId ? (
+      {status.type === 'success' &&
+      status.attestationId &&
+      status.origin?.attestationExplorerUrl ? (
         <div
           className="status-message success"
           role="status"
@@ -369,12 +474,22 @@ const AuditForm = () => {
         >
           Attestation ID:{' '}
           <a
-            href={getVeraxExplorerAttestationUrl(chainId, status.attestationId)}
+            href={status.origin.attestationExplorerUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
             {truncateHexString(status.attestationId)}
           </a>
+        </div>
+      ) : null}
+
+      {status.origin &&
+      (address !== status.origin.account ||
+        chainId !== status.origin.chainId) ? (
+        <div className="status-message notice" role="status">
+          This result belongs to the submitting account {status.origin.account}{' '}
+          on {lineaChainLabel(status.origin.chainId)}. The connected account or
+          network has changed.
         </div>
       ) : null}
 
