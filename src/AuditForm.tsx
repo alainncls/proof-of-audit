@@ -24,6 +24,7 @@ import {
   SCHEMA_ID,
 } from './utils/constants.ts';
 import { extractAttestationIdFromReceipt } from './utils/attestationReceipt.ts';
+import { isValidGithubRepositoryUrl } from './utils/repoUrl.ts';
 
 type FormValues = {
   commitHash: string;
@@ -64,8 +65,6 @@ type StatusState = {
 };
 
 const COMMIT_HASH_PATTERN = /^[0-9a-f]{40}$/;
-const GITHUB_REPO_URL_PATTERN = /^https:\/\/github\.com\/[^/]+\/[^/]+$/;
-
 const FORM_FIELDS: readonly FormFieldConfig[] = [
   {
     name: 'repoUrl',
@@ -99,7 +98,7 @@ const validateField = (name: FormFieldName, value: string): string => {
         ? ''
         : 'Invalid commit hash (40 hex characters expected)';
     case 'repoUrl':
-      return GITHUB_REPO_URL_PATTERN.test(value)
+      return isValidGithubRepositoryUrl(value)
         ? ''
         : 'Invalid GitHub URL (e.g., https://github.com/owner/repo)';
     case 'contractAddress':
