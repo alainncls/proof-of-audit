@@ -71,6 +71,16 @@
   text-align: center;
 }
 
+.wallet-load-error {
+  color: var(--color-text);
+  text-align: center;
+}
+
+.wallet-load-error-title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
