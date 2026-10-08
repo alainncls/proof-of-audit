@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert';
+import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -108,4 +109,37 @@ assert.equal(
   extractAttestationIdFromReceipt(1, [validAttestationLog]),
   undefined,
   'expected extraction to reject unsupported chains',
+);
+
+// Mutation sensitivity: these fixtures call the production helper. A wrong
+// registry address or topic in the expected matching log makes extraction
+// return undefined and fails the assertion above. Do not copy the filter.
+//
+// extractAttestationIdFromReceipt does not receive or check receipt status.
+// A reverted receipt can still contain a matching log. Rejecting
+// status !== 'success' belongs to AuditForm and is covered by the POA-01
+// component test, not by a fake status check here.
+
+const childEnv = { ...process.env };
+delete childEnv.VITE_WALLETCONNECT_PROJECT_ID;
+
+const missingProjectId = spawnSync(
+  process.execPath,
+  ['scripts/check-missing-walletconnect-project-id.mjs'],
+  {
+    cwd: repoRoot,
+    env: childEnv,
+    encoding: 'utf8',
+  },
+);
+
+assert.equal(
+  missingProjectId.status,
+  0,
+  `importing wagmiConfig without VITE_WALLETCONNECT_PROJECT_ID must fail\nstdout: ${missingProjectId.stdout}\nstderr: ${missingProjectId.stderr}`,
+);
+assert.match(
+  `${missingProjectId.stdout}\n${missingProjectId.stderr}`,
+  /Missing VITE_WALLETCONNECT_PROJECT_ID/,
+  'missing project id check must report the production configuration error',
 );
