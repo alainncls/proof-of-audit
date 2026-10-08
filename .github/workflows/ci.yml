@@ -49,3 +49,6 @@ jobs:
           VITE_WALLETCONNECT_PROJECT_ID: ${{ secrets.VITE_WALLETCONNECT_PROJECT_ID }}
           VITE_INFURA_API_KEY: ${{ secrets.VITE_INFURA_API_KEY }}
           VITE_GA_ID: ${{ secrets.VITE_GA_ID }}
+
+      - name: Verify security fixes
+        run: npm run security:verify
