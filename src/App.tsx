@@ -21,7 +21,6 @@ const walletAppFallback = (
     Loading wallet tools...
   </div>
 );
-
 type WalletLoadErrorProps = {
   error: Error;
   onRetry: () => void;
@@ -60,7 +59,7 @@ function WalletLoadError({ error, onRetry }: Readonly<WalletLoadErrorProps>) {
       <h2 className="wallet-load-error-title">Wallet tools unavailable</h2>
       <p>{walletLoadMessage(error)}</p>
       <button type="button" className="start-button" onClick={onRetry}>
-        Try again
+        Reload and try again
       </button>
     </section>
   );
@@ -107,10 +106,12 @@ class WalletErrorBoundary extends Component<
 
 type AppProps = {
   loadWalletApp?: WalletAppLoad;
+  reloadPage?: () => void;
 };
 
 const App = ({
   loadWalletApp: walletAppLoad = loadWalletApp,
+  reloadPage = () => window.location.reload(),
 }: Readonly<AppProps>) => {
   const [isWalletAppEnabled, setIsWalletAppEnabled] = useState(false);
   const [walletLoadAttempt, setWalletLoadAttempt] = useState(0);
@@ -126,7 +127,8 @@ const App = ({
     setPreloadError(null);
     setWalletLoadAttempt((attempt) => attempt + 1);
     setIsWalletAppEnabled(true);
-  }, []);
+    reloadPage();
+  }, [reloadPage]);
 
   let walletArea = (
     <section className="tool-start" aria-label="Start Proof of Audit">

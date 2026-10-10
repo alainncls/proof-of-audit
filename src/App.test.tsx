@@ -17,11 +17,14 @@ const WalletAppMock = () => (
 const successfulWalletLoad = async () => ({ default: WalletAppMock });
 
 describe('App wallet loading', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    window.sessionStorage.clear();
+  });
 
   it('renders Start attestation without loading the wallet chunk', () => {
     const loadWalletApp = vi.fn(successfulWalletLoad);
-    render(<App loadWalletApp={loadWalletApp} />);
+    render(<App loadWalletApp={loadWalletApp} reloadPage={() => undefined} />);
 
     expect(
       screen.getByRole('button', { name: 'Start attestation' }),
@@ -48,12 +51,14 @@ describe('App wallet loading', () => {
       }
       return { default: WalletAppMock };
     });
-    render(<App loadWalletApp={loadWalletApp} />);
+    render(<App loadWalletApp={loadWalletApp} reloadPage={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Start attestation' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/connection/i);
     shouldFail = false;
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Reload and try again' }),
+    );
     expect(
       await screen.findByRole('button', { name: 'Connect wallet' }),
     ).toBeInTheDocument();

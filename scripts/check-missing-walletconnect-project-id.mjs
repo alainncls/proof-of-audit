@@ -12,9 +12,7 @@ const server = await createServer({
 
 try {
   await server.ssrLoadModule('/src/wagmiConfig.ts');
-  console.error(
-    'wagmiConfig evaluated without VITE_WALLETCONNECT_PROJECT_ID',
-  );
+  console.error('wagmiConfig evaluated without VITE_WALLETCONNECT_PROJECT_ID');
   process.exitCode = 1;
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
