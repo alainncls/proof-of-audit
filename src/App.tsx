@@ -43,14 +43,14 @@ const isChunkLoadError = (error: Error): boolean =>
 
 const walletLoadMessage = (error: Error): string => {
   if (isMissingWalletConfig(error)) {
-    return 'Wallet configuration is missing. Set VITE_WALLETCONNECT_PROJECT_ID in the environment used to build this app, then try again. A project id is not invented here.';
+    return 'Wallet configuration is unavailable. Contact the site operator for help.';
   }
 
   if (isChunkLoadError(error)) {
     return 'The wallet tools bundle failed to load. Check your connection, then try again.';
   }
 
-  return `The wallet tools could not be loaded. Try again. ${error.message}`;
+  return 'The wallet tools could not be loaded. Try again later or contact support.';
 };
 
 function WalletLoadError({ error, onRetry }: Readonly<WalletLoadErrorProps>) {

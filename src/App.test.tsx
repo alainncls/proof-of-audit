@@ -106,9 +106,10 @@ describe('App wallet loading', () => {
     render(<App loadWalletApp={loadWalletApp} walletProjectId="" />);
     fireEvent.click(screen.getByRole('button', { name: 'Start attestation' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'VITE_WALLETCONNECT_PROJECT_ID',
-    );
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Wallet configuration is unavailable.');
+    expect(alert).not.toHaveTextContent('VITE_WALLETCONNECT_PROJECT_ID');
+    expect(alert).not.toHaveTextContent('A project id is not invented here.');
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
     expect(loadWalletApp).not.toHaveBeenCalled();
   });
