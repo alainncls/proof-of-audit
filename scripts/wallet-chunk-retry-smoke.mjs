@@ -249,9 +249,17 @@ try {
       cdp,
       `({ alert: document.querySelector('[role="alert"]')?.innerText, body: document.body.innerText.slice(-700), footer: Boolean(document.querySelector('footer')), walletChunk: performance.getEntriesByType('resource').some(e => e.name.includes('WalletApp-')), unhandled: window.__walletUnhandled ?? [] })`,
     );
-    if (!outcome.alert?.includes('VITE_WALLETCONNECT_PROJECT_ID')) {
+    if (!outcome.alert?.includes('Wallet configuration is unavailable')) {
       throw new Error(
         `Missing-config build did not expose the expected accessible error: ${JSON.stringify(outcome)}`,
+      );
+    }
+    if (
+      outcome.alert.includes('VITE_WALLETCONNECT_PROJECT_ID') ||
+      outcome.alert.includes('A project id is not invented here')
+    ) {
+      throw new Error(
+        `Missing-config user message leaked operator configuration details: ${JSON.stringify(outcome.alert)}`,
       );
     }
     if (!outcome.footer || outcome.walletChunk || outcome.unhandled.length) {
