@@ -24,7 +24,13 @@ describe('App wallet loading', () => {
 
   it('renders Start attestation without loading the wallet chunk', () => {
     const loadWalletApp = vi.fn(successfulWalletLoad);
-    render(<App loadWalletApp={loadWalletApp} reloadPage={() => undefined} />);
+    render(
+      <App
+        loadWalletApp={loadWalletApp}
+        reloadPage={() => undefined}
+        walletProjectId="test-project-id"
+      />,
+    );
 
     expect(
       screen.getByRole('button', { name: 'Start attestation' }),
@@ -33,7 +39,12 @@ describe('App wallet loading', () => {
   });
 
   it('renders the wallet control after Start attestation loads the chunk', async () => {
-    render(<App loadWalletApp={successfulWalletLoad} />);
+    render(
+      <App
+        loadWalletApp={successfulWalletLoad}
+        walletProjectId="test-project-id"
+      />,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Start attestation' }));
 
@@ -51,7 +62,13 @@ describe('App wallet loading', () => {
       }
       return { default: WalletAppMock };
     });
-    render(<App loadWalletApp={loadWalletApp} reloadPage={() => undefined} />);
+    render(
+      <App
+        loadWalletApp={loadWalletApp}
+        reloadPage={() => undefined}
+        walletProjectId="test-project-id"
+      />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Start attestation' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/connection/i);
@@ -70,7 +87,9 @@ describe('App wallet loading', () => {
       throw new Error('Failed to fetch dynamically imported module');
     });
     window.addEventListener('unhandledrejection', unhandled);
-    render(<App loadWalletApp={loadWalletApp} />);
+    render(
+      <App loadWalletApp={loadWalletApp} walletProjectId="test-project-id" />,
+    );
     fireEvent.pointerEnter(
       screen.getByRole('button', { name: 'Start attestation' }),
     );
@@ -83,20 +102,14 @@ describe('App wallet loading', () => {
   });
 
   it('shows a missing-configuration error without blanking the page', async () => {
-    render(
-      <App
-        loadWalletApp={async () => {
-          throw new Error(
-            'Missing VITE_WALLETCONNECT_PROJECT_ID environment variable',
-          );
-        }}
-      />,
-    );
+    const loadWalletApp = vi.fn(successfulWalletLoad);
+    render(<App loadWalletApp={loadWalletApp} walletProjectId="" />);
     fireEvent.click(screen.getByRole('button', { name: 'Start attestation' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'VITE_WALLETCONNECT_PROJECT_ID',
     );
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+    expect(loadWalletApp).not.toHaveBeenCalled();
   });
 });

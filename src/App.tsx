@@ -107,21 +107,41 @@ class WalletErrorBoundary extends Component<
 type AppProps = {
   loadWalletApp?: WalletAppLoad;
   reloadPage?: () => void;
+  walletProjectId?: string;
 };
 
 const App = ({
   loadWalletApp: walletAppLoad = loadWalletApp,
   reloadPage = () => window.location.reload(),
+  walletProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
 }: Readonly<AppProps>) => {
   const [isWalletAppEnabled, setIsWalletAppEnabled] = useState(false);
   const [walletLoadAttempt, setWalletLoadAttempt] = useState(0);
   const [preloadError, setPreloadError] = useState<Error | null>(null);
 
   const preloadWalletApp = useCallback(() => {
+    if (!walletProjectId) {
+      setPreloadError(
+        new Error('Missing VITE_WALLETCONNECT_PROJECT_ID environment variable'),
+      );
+      return;
+    }
+
     void walletAppLoad().catch((error: unknown) => {
       setPreloadError(toError(error));
     });
-  }, [walletAppLoad]);
+  }, [walletAppLoad, walletProjectId]);
+
+  const startWalletApp = useCallback(() => {
+    if (!walletProjectId) {
+      setPreloadError(
+        new Error('Missing VITE_WALLETCONNECT_PROJECT_ID environment variable'),
+      );
+      return;
+    }
+
+    setIsWalletAppEnabled(true);
+  }, [walletProjectId]);
 
   const retryWalletLoad = useCallback(() => {
     setPreloadError(null);
@@ -140,7 +160,7 @@ const App = ({
         type="button"
         className="start-button"
         onFocus={preloadWalletApp}
-        onClick={() => setIsWalletAppEnabled(true)}
+        onClick={startWalletApp}
         onPointerEnter={preloadWalletApp}
       >
         Start attestation

@@ -8,6 +8,7 @@ import { createServer } from 'node:net';
 const chromePath = process.env.CHROME_PATH;
 if (!chromePath)
   throw new Error('CHROME_PATH must point to a Chromium executable');
+const expectMissingConfig = process.argv.includes('--expect-missing-config');
 
 const reservePort = async () => {
   const server = createServer();
@@ -187,7 +188,11 @@ try {
     loadEvents += 1;
   });
   cdp.on('Fetch.requestPaused', async (request) => {
-    if (request.request.url.includes('WalletApp-') && !failureInjected) {
+    if (
+      !expectMissingConfig &&
+      request.request.url.includes('WalletApp-') &&
+      !failureInjected
+    ) {
       failureInjected = true;
       walletChunkRequests += 1;
       await cdp.send('Fetch.failRequest', {
@@ -238,56 +243,88 @@ try {
   }
 
   await evaluate(cdp, `document.querySelector('button.start-button').click()`);
-  await waitForDom(
-    cdp,
-    `document.querySelector('[role="alert"]')?.textContent?.includes('wallet tools bundle failed to load')`,
-    'accessible chunk failure state',
-  );
-  if (!failureInjected)
-    throw new Error('The browser did not request the lazy wallet chunk');
+  if (expectMissingConfig) {
+    await delay(1_000);
+    const outcome = await evaluate(
+      cdp,
+      `({ alert: document.querySelector('[role="alert"]')?.innerText, body: document.body.innerText.slice(-700), footer: Boolean(document.querySelector('footer')), walletChunk: performance.getEntriesByType('resource').some(e => e.name.includes('WalletApp-')), unhandled: window.__walletUnhandled ?? [] })`,
+    );
+    if (!outcome.alert?.includes('VITE_WALLETCONNECT_PROJECT_ID')) {
+      throw new Error(
+        `Missing-config build did not expose the expected accessible error: ${JSON.stringify(outcome)}`,
+      );
+    }
+    if (!outcome.footer || outcome.walletChunk || outcome.unhandled.length) {
+      throw new Error(
+        `Missing configuration did not fail safely: ${JSON.stringify(outcome)}`,
+      );
+    }
+    console.log(
+      JSON.stringify(
+        {
+          status: 'passed',
+          startup,
+          missingConfigError: true,
+          contentInfoPreserved: outcome.contentInfo,
+          unhandledRejections: outcome.unhandled.length,
+          externalRequestsBeforeInteraction: externalRequests.length,
+        },
+        null,
+        2,
+      ),
+    );
+  } else {
+    await waitForDom(
+      cdp,
+      `document.querySelector('[role="alert"]')?.textContent?.includes('wallet tools bundle failed to load')`,
+      'accessible chunk failure state',
+    );
+    if (!failureInjected)
+      throw new Error('The browser did not request the lazy wallet chunk');
 
-  const beforeRetryLoads = loadEvents;
-  await evaluate(
-    cdp,
-    `document.querySelector('[role="alert"] button')?.click()`,
-  );
-  await waitFor(
-    'fresh document after retry',
-    () => loadEvents > beforeRetryLoads,
-  );
-  await waitForDom(
-    cdp,
-    `document.querySelector('button.start-button')?.textContent?.trim() === 'Start attestation'`,
-    'reloaded landing UI',
-  );
-  const outcome = await evaluate(
-    cdp,
-    `({ walletButton: Boolean(document.querySelector('appkit-button')), walletChunk: performance.getEntriesByType('resource').some(e => e.name.includes('WalletApp-')), unhandled: window.__walletUnhandled ?? [] })`,
-  );
-  if (outcome.walletButton || outcome.walletChunk) {
-    throw new Error(
-      `The retry page performed wallet bootstrap before a new explicit start: ${JSON.stringify(outcome)}`,
+    const beforeRetryLoads = loadEvents;
+    await evaluate(
+      cdp,
+      `document.querySelector('[role="alert"] button')?.click()`,
+    );
+    await waitFor(
+      'fresh document after retry',
+      () => loadEvents > beforeRetryLoads,
+    );
+    await waitForDom(
+      cdp,
+      `document.querySelector('button.start-button')?.textContent?.trim() === 'Start attestation'`,
+      'reloaded landing UI',
+    );
+    const outcome = await evaluate(
+      cdp,
+      `({ walletButton: Boolean(document.querySelector('appkit-button')), walletChunk: performance.getEntriesByType('resource').some(e => e.name.includes('WalletApp-')), unhandled: window.__walletUnhandled ?? [] })`,
+    );
+    if (outcome.walletButton || outcome.walletChunk) {
+      throw new Error(
+        `The retry page performed wallet bootstrap before a new explicit start: ${JSON.stringify(outcome)}`,
+      );
+    }
+    if (outcome.unhandled.length) {
+      throw new Error(
+        `Unhandled promise rejection(s): ${JSON.stringify(outcome.unhandled)}`,
+      );
+    }
+    console.log(
+      JSON.stringify(
+        {
+          status: 'passed',
+          startup,
+          injectedChunkFailure: failureInjected,
+          retryReturnedToLanding: true,
+          unhandledRejections: outcome.unhandled.length,
+          externalRequestsBeforeInteraction: externalRequests.length,
+        },
+        null,
+        2,
+      ),
     );
   }
-  if (outcome.unhandled.length) {
-    throw new Error(
-      `Unhandled promise rejection(s): ${JSON.stringify(outcome.unhandled)}`,
-    );
-  }
-  console.log(
-    JSON.stringify(
-      {
-        status: 'passed',
-        startup,
-        injectedChunkFailure: failureInjected,
-        retryReturnedToLanding: true,
-        unhandledRejections: outcome.unhandled.length,
-        externalRequestsBeforeInteraction: externalRequests.length,
-      },
-      null,
-      2,
-    ),
-  );
 } finally {
   cdp?.close();
   for (const process of [chrome, preview]) {

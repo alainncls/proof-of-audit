@@ -12,6 +12,7 @@
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "test:browser:wallet": "node scripts/wallet-chunk-retry-smoke.mjs",
+    "test:browser:wallet:missing-config": "node scripts/wallet-chunk-retry-smoke.mjs --expect-missing-config",
     "security:verify": "node --experimental-strip-types scripts/verify-security-fixes.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
