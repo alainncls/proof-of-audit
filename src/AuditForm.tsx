@@ -170,6 +170,11 @@ const AuditFormField = memo(function AuditFormField({
   );
 });
 
+// Verax encodes ABI fields positionally at runtime, although its public type
+// declares object[]. Keep the runtime-correct tuple at this boundary.
+const veraxAbiValues = (values: string[]): object[] =>
+  values as unknown as object[];
+
 const AuditForm = () => {
   const [inputValues, setInputValues] = useState<FormValues>({
     commitHash: '',
@@ -301,12 +306,10 @@ const AuditForm = () => {
             schemaId: SCHEMA_ID,
             expirationDate,
             subject: capturedSubject,
-            attestationData: [
-              {
-                commitHash: capturedCommitHash,
-                repoUrl: capturedRepoUrl,
-              },
-            ],
+            attestationData: veraxAbiValues([
+              capturedCommitHash,
+              capturedRepoUrl,
+            ]),
           },
           [],
         );
