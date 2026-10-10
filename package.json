@@ -6,11 +6,13 @@
   "scripts": {
     "build": "tsc && vite build",
     "dev": "vite",
-    "format": "prettier --check '**/*.css' '**/*.ts' '**/*.tsx' '**/*.json' '**/*.md'",
-    "format:fix": "prettier --write '**/*.css' '**/*.ts' '**/*.tsx' '**/*.json' '**/*.md'",
+    "format": "prettier --check '**/*.css' '**/*.ts' '**/*.tsx' '**/*.mjs' '**/*.json' '**/*.md'",
+    "format:fix": "prettier --write '**/*.css' '**/*.ts' '**/*.tsx' '**/*.mjs' '**/*.json' '**/*.md'",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
+    "test:browser:wallet": "node scripts/wallet-chunk-retry-smoke.mjs",
+    "test:browser:wallet:missing-config": "node scripts/wallet-chunk-retry-smoke.mjs --expect-missing-config",
     "security:verify": "node --experimental-strip-types scripts/verify-security-fixes.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

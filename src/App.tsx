@@ -21,7 +21,6 @@ const walletAppFallback = (
     Loading wallet tools...
   </div>
 );
-
 type WalletLoadErrorProps = {
   error: Error;
   onRetry: () => void;
@@ -60,7 +59,7 @@ function WalletLoadError({ error, onRetry }: Readonly<WalletLoadErrorProps>) {
       <h2 className="wallet-load-error-title">Wallet tools unavailable</h2>
       <p>{walletLoadMessage(error)}</p>
       <button type="button" className="start-button" onClick={onRetry}>
-        Try again
+        Reload and try again
       </button>
     </section>
   );
@@ -107,26 +106,49 @@ class WalletErrorBoundary extends Component<
 
 type AppProps = {
   loadWalletApp?: WalletAppLoad;
+  reloadPage?: () => void;
+  walletProjectId?: string;
 };
 
 const App = ({
   loadWalletApp: walletAppLoad = loadWalletApp,
+  reloadPage = () => window.location.reload(),
+  walletProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
 }: Readonly<AppProps>) => {
   const [isWalletAppEnabled, setIsWalletAppEnabled] = useState(false);
   const [walletLoadAttempt, setWalletLoadAttempt] = useState(0);
   const [preloadError, setPreloadError] = useState<Error | null>(null);
 
   const preloadWalletApp = useCallback(() => {
+    if (!walletProjectId) {
+      setPreloadError(
+        new Error('Missing VITE_WALLETCONNECT_PROJECT_ID environment variable'),
+      );
+      return;
+    }
+
     void walletAppLoad().catch((error: unknown) => {
       setPreloadError(toError(error));
     });
-  }, [walletAppLoad]);
+  }, [walletAppLoad, walletProjectId]);
+
+  const startWalletApp = useCallback(() => {
+    if (!walletProjectId) {
+      setPreloadError(
+        new Error('Missing VITE_WALLETCONNECT_PROJECT_ID environment variable'),
+      );
+      return;
+    }
+
+    setIsWalletAppEnabled(true);
+  }, [walletProjectId]);
 
   const retryWalletLoad = useCallback(() => {
     setPreloadError(null);
     setWalletLoadAttempt((attempt) => attempt + 1);
     setIsWalletAppEnabled(true);
-  }, []);
+    reloadPage();
+  }, [reloadPage]);
 
   let walletArea = (
     <section className="tool-start" aria-label="Start Proof of Audit">
@@ -138,7 +160,7 @@ const App = ({
         type="button"
         className="start-button"
         onFocus={preloadWalletApp}
-        onClick={() => setIsWalletAppEnabled(true)}
+        onClick={startWalletApp}
         onPointerEnter={preloadWalletApp}
       >
         Start attestation
