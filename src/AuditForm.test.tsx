@@ -418,7 +418,12 @@ describe('AuditForm transaction lifecycle', () => {
           schemaId: SCHEMA_ID,
           expirationDate: expect.any(Number),
           subject: CONTRACT_ADDRESS,
-          attestationData: [COMMIT_HASH, REPO_URL],
+          attestationData: [
+            {
+              commitHash: COMMIT_HASH,
+              repoUrl: REPO_URL,
+            },
+          ],
         },
         [],
       );

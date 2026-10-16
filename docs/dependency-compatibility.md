@@ -14,17 +14,15 @@ Verax SDK 5.4.0 runtime, and local-only GraphQL/JSON-RPC test servers.
 | Compatibility evidence | `npm ci` succeeds; `npm ls @graphql-tools/utils @graphql-tools/executor-legacy-ws graphql --all` is valid with GraphQL 16.13.2; full `npm audit` reports zero advisories. `src/veraxSdk.integration.test.ts` executes real SDK query/decode/error paths and `simulateAttest` using local HTTP/RPC for both Linea Mainnet and Sepolia. |
 | Decision               | Retain the exact security override for now; do not claim SemVer compatibility. The major-range violations remain unresolved upstream compatibility risk. Revisit when Verax/GraphQL Mesh parents publish compatible ranges or after a reviewed parent upgrade. Do not downgrade Verax to 2.4.0 merely to satisfy npm's automatic fix. |
 
-## Verax payload contract correction
+## Verax payload contract
 
-The application previously passed `attestationData: [{ commitHash, repoUrl }]`.
-The real Verax SDK 5.4.0 ABI encoder treated that as one value for the
-two-field schema (`string commitHash,string repoUrl`) and failed with an ABI
-parameter/value count mismatch. It also declares `AttestationPayload`
-`attestationData` as `object[]`, which does not describe the runtime encoder's
-positional string tuple. The app now passes `[commitHash, repoUrl]` at this
-SDK boundary (with a narrow documented type cast), matching the on-chain ABI.
-The integration test verifies the valid query/decode and transaction-call
-preparation; it never signs or sends a transaction.
+The schema registered on-chain for `SCHEMA_ID` is
+`(string commitHash, string repoUrl)`: one tuple parameter. The SDK encodes
+`attestationData` with `encodeAbiParameters(parseAbiParameters(schema), data)`,
+so the app passes `attestationData: [{ commitHash, repoUrl }]`. Positional
+values (`[commitHash, repoUrl]`) fail with an ABI parameter/value count
+mismatch. The integration test uses the registered schema string and verifies
+transaction-call preparation; it never signs or sends a transaction.
 
 ## Local verification limits
 

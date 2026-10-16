@@ -15,9 +15,11 @@ import {
   SCHEMA_ID,
 } from './utils/constants.ts';
 
-const ABI_SCHEMA = 'string commitHash,string repoUrl';
+// Schema string registered on-chain for SCHEMA_ID.
+const ABI_SCHEMA = '(string commitHash, string repoUrl)';
 const COMMIT_HASH = 'a'.repeat(40);
 const REPO_URL = 'https://github.com/example/project';
+const ATTESTATION_DATA = [{ commitHash: COMMIT_HASH, repoUrl: REPO_URL }];
 const SUBJECT = '0x2222222222222222222222222222222222222222';
 const ATTESTER = '0x1111111111111111111111111111111111111111';
 const TRANSACTION_RESULT = `0x${'0'.repeat(64)}` as const;
@@ -63,7 +65,7 @@ const attestationRecord = (sdk: VeraxSdk): Attestation => ({
   revoked: false,
   subject: SUBJECT,
   encodedSubject: '0x',
-  attestationData: sdk.utils.encode(ABI_SCHEMA, [COMMIT_HASH, REPO_URL]),
+  attestationData: sdk.utils.encode(ABI_SCHEMA, ATTESTATION_DATA),
   decodedData: [],
   decodedPayload: {},
   schema: schemaRecord(),
@@ -219,8 +221,7 @@ describe('Verax SDK against local GraphQL and JSON-RPC transports', () => {
           schemaId: SCHEMA_ID,
           expirationDate: 2_000_000_000,
           subject: SUBJECT,
-          // The SDK's declaration says object[], but the encoder needs ABI-order values.
-          attestationData: [COMMIT_HASH, REPO_URL] as unknown as object[],
+          attestationData: ATTESTATION_DATA,
         },
         [],
       );
@@ -228,7 +229,7 @@ describe('Verax SDK against local GraphQL and JSON-RPC transports', () => {
       expect(request.functionName).toBe('attest');
       expect(request.args).toBeDefined();
       expect(JSON.stringify(request.args)).toContain(
-        sdk.utils.encode(ABI_SCHEMA, [COMMIT_HASH, REPO_URL]),
+        sdk.utils.encode(ABI_SCHEMA, ATTESTATION_DATA),
       );
       expect(rpcCalls).toContain('eth_call');
       expect(rpcChainIds.every((rpcChainId) => rpcChainId === chainId)).toBe(
