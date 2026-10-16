@@ -54,6 +54,25 @@ describe('App wallet loading', () => {
     expect(screen.getByLabelText('Commit Hash')).toBeInTheDocument();
   });
 
+  it('renders the wallet app when the chunk resolves after a delay', async () => {
+    const loadWalletApp = vi.fn(
+      () =>
+        new Promise<{ default: typeof WalletAppMock }>((resolve) => {
+          setTimeout(() => resolve({ default: WalletAppMock }), 20);
+        }),
+    );
+    render(
+      <App loadWalletApp={loadWalletApp} walletProjectId="test-project-id" />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start attestation' }));
+
+    expect(
+      await screen.findByRole('button', { name: 'Connect wallet' }),
+    ).toBeInTheDocument();
+    expect(loadWalletApp).toHaveBeenCalledTimes(1);
+  });
+
   it('shows an accessible chunk-load error and recovers on retry', async () => {
     let shouldFail = true;
     const loadWalletApp = vi.fn(async () => {
