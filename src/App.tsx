@@ -65,12 +65,6 @@ function WalletLoadError({ error, onRetry }: Readonly<WalletLoadErrorProps>) {
   );
 }
 
-function WalletAppLoader({ load }: Readonly<{ load: WalletAppLoad }>) {
-  const [WalletApp] = useState(() => lazy(load));
-
-  return <WalletApp />;
-}
-
 type WalletErrorBoundaryProps = {
   children: ReactNode;
   onRetry: () => void;
@@ -118,6 +112,8 @@ const App = ({
   const [isWalletAppEnabled, setIsWalletAppEnabled] = useState(false);
   const [walletLoadAttempt, setWalletLoadAttempt] = useState(0);
   const [preloadError, setPreloadError] = useState<Error | null>(null);
+  // Keep the lazy component outside Suspense so a suspended mount reuses it.
+  const [WalletApp, setWalletApp] = useState(() => lazy(walletAppLoad));
 
   const preloadWalletApp = useCallback(() => {
     if (!walletProjectId) {
@@ -146,9 +142,10 @@ const App = ({
   const retryWalletLoad = useCallback(() => {
     setPreloadError(null);
     setWalletLoadAttempt((attempt) => attempt + 1);
+    setWalletApp(() => lazy(walletAppLoad));
     setIsWalletAppEnabled(true);
     reloadPage();
-  }, [reloadPage]);
+  }, [reloadPage, walletAppLoad]);
 
   let walletArea = (
     <section className="tool-start" aria-label="Start Proof of Audit">
@@ -176,7 +173,7 @@ const App = ({
     walletArea = (
       <WalletErrorBoundary key={walletLoadAttempt} onRetry={retryWalletLoad}>
         <Suspense fallback={walletAppFallback}>
-          <WalletAppLoader load={walletAppLoad} />
+          <WalletApp />
         </Suspense>
       </WalletErrorBoundary>
     );
