@@ -99,13 +99,13 @@ const attestationLog = (
 };
 
 const fillValidForm = () => {
-  fireEvent.change(screen.getByLabelText('GitHub Repository URL'), {
+  fireEvent.change(screen.getByLabelText('Repository'), {
     target: { value: REPO_URL },
   });
-  fireEvent.change(screen.getByLabelText('Commit Hash'), {
+  fireEvent.change(screen.getByLabelText('Commit'), {
     target: { value: COMMIT_HASH },
   });
-  fireEvent.change(screen.getByLabelText('Smart Contract Address'), {
+  fireEvent.change(screen.getByLabelText('Contract'), {
     target: { value: CONTRACT_ADDRESS },
   });
 };
@@ -181,7 +181,7 @@ describe('AuditForm transaction lifecycle', () => {
       status: 'success',
       logs: [attestationLog(LINEA_SEPOLIA_CHAIN_ID)],
     } as never);
-    expect(await screen.findByText(/Attestation ID/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Attestation$/)).toBeInTheDocument();
     expect(attest).toHaveBeenCalledTimes(1);
   });
 
@@ -222,10 +222,7 @@ describe('AuditForm transaction lifecycle', () => {
       'href',
       getBlockExplorerTxUrl(LINEA_SEPOLIA_CHAIN_ID, TX_HASH),
     );
-    expect(screen.getByText(/submitting account/i)).toHaveTextContent(
-      SUBMITTING_ACCOUNT,
-    );
-    expect(screen.getByText(/submitting account/i)).toHaveTextContent(
+    expect(screen.getByTitle(SUBMITTING_ACCOUNT)).toHaveTextContent(
       'Linea Sepolia',
     );
     expect(waitForReceiptMock).toHaveBeenCalledWith(
@@ -275,10 +272,7 @@ describe('AuditForm transaction lifecycle', () => {
       'href',
       getBlockExplorerTxUrl(LINEA_SEPOLIA_CHAIN_ID, TX_HASH),
     );
-    expect(screen.getByText(/submitting account/i)).toHaveTextContent(
-      `${SUBMITTING_ACCOUNT}`,
-    );
-    expect(screen.getByText(/submitting account/i)).toHaveTextContent(
+    expect(screen.getByTitle(SUBMITTING_ACCOUNT)).toHaveTextContent(
       'Linea Sepolia',
     );
     expect(waitForReceiptMock).toHaveBeenCalledTimes(1);
@@ -295,7 +289,7 @@ describe('AuditForm transaction lifecycle', () => {
       logs: [attestationLog(LINEA_SEPOLIA_CHAIN_ID)],
     });
 
-    expect(await screen.findByText(/Attestation ID/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Attestation$/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /0xcdcd/ })).toHaveAttribute(
       'href',
       getVeraxExplorerAttestationUrl(LINEA_SEPOLIA_CHAIN_ID, ATTESTATION_ID),
@@ -317,7 +311,7 @@ describe('AuditForm transaction lifecycle', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'User rejected the request',
     );
-    expect(screen.queryByText(/Attestation ID/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Attestation$/)).not.toBeInTheDocument();
     expect(attest).toHaveBeenCalledTimes(1);
   });
 
@@ -335,7 +329,7 @@ describe('AuditForm transaction lifecycle', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Transaction failed',
     );
-    expect(screen.queryByText(/Attestation ID/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Attestation$/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /0xabab/ })).toHaveAttribute(
       'href',
       getBlockExplorerTxUrl(LINEA_SEPOLIA_CHAIN_ID, TX_HASH),
@@ -350,10 +344,10 @@ describe('AuditForm transaction lifecycle', () => {
     submitForm();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Transaction failed - no hash received',
+      'No transaction hash returned.',
     );
     expect(waitForReceiptMock).not.toHaveBeenCalled();
-    expect(screen.queryByText(/Attestation ID/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Attestation$/)).not.toBeInTheDocument();
   });
 
   it('reports a missing attestation event as an error', async () => {
@@ -368,9 +362,9 @@ describe('AuditForm transaction lifecycle', () => {
     submitForm();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Could not extract attestation ID from transaction',
+      'No attestation found in the receipt.',
     );
-    expect(screen.queryByText(/Attestation ID/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Attestation$/)).not.toBeInTheDocument();
   });
 
   it('does not call the SDK when the captured chain is not a supported Linea network', async () => {
@@ -380,9 +374,10 @@ describe('AuditForm transaction lifecycle', () => {
 
     submitForm();
 
+    // The chain banner and the submit error both render.
     expect(
-      await screen.findByText(/before issuing an attestation/i),
-    ).toBeInTheDocument();
+      await screen.findAllByText('Switch to a Linea network.'),
+    ).toHaveLength(2);
     expect(attest).not.toHaveBeenCalled();
     expect(waitForReceiptMock).not.toHaveBeenCalled();
   });
@@ -410,7 +405,7 @@ describe('AuditForm transaction lifecycle', () => {
 
       submitForm();
 
-      expect(await screen.findByText(/Attestation ID/)).toBeInTheDocument();
+      expect(await screen.findByText(/^Attestation$/)).toBeInTheDocument();
       expect(attest).toHaveBeenCalledTimes(1);
       expect(attest).toHaveBeenCalledWith(
         PORTAL_ID,
@@ -450,14 +445,12 @@ describe('AuditForm transaction lifecycle', () => {
     fillValidForm();
     submitForm();
 
-    expect(
-      await screen.findByText(/Waiting for confirmation/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Confirming/)).toBeInTheDocument();
 
     accountState.address = OTHER_ACCOUNT;
     view.rerender(<AuditForm />);
 
-    expect(screen.getByText(/Waiting for confirmation/)).toBeInTheDocument();
+    expect(screen.getByText(/Confirming/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /0xabab/ })).toHaveAttribute(
       'href',
       getBlockExplorerTxUrl(LINEA_SEPOLIA_CHAIN_ID, TX_HASH),
@@ -468,6 +461,6 @@ describe('AuditForm transaction lifecycle', () => {
       status: 'success',
       logs: [attestationLog(LINEA_SEPOLIA_CHAIN_ID)],
     });
-    expect(await screen.findByText(/Attestation ID/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Attestation$/)).toBeInTheDocument();
   });
 });

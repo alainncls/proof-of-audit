@@ -192,11 +192,11 @@ Attestations expire after **30 days**. This is configurable in [`src/utils/const
 
 For testing on Linea Sepolia:
 
-| Field            | Example Value                                               |
-| ---------------- | ----------------------------------------------------------- |
-| GitHub Repo URL  | `https://github.com/alainncls/strava-segments-to-nfts-dapp` |
-| Commit Hash      | `37f8ecd53a64ba2395b7de0a8d7ecb0dbfdced64`                  |
-| Contract Address | `0x2fafe2c217be096e09b64c49825fe46b7c3e33b2`                |
+| Field      | Example Value                                               |
+| ---------- | ----------------------------------------------------------- |
+| Repository | `https://github.com/alainncls/strava-segments-to-nfts-dapp` |
+| Commit     | `37f8ecd53a64ba2395b7de0a8d7ecb0dbfdced64`                  |
+| Contract   | `0x2fafe2c217be096e09b64c49825fe46b7c3e33b2`                |
 
 ---
 

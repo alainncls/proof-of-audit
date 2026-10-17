@@ -17,9 +17,9 @@ type WalletAppModule = { default: ComponentType };
 type WalletAppLoad = () => Promise<WalletAppModule>;
 
 const walletAppFallback = (
-  <div className="form form-loading" role="status" aria-live="polite">
-    Loading wallet tools...
-  </div>
+  <p className="form-loading" role="status" aria-live="polite">
+    Loading wallet…
+  </p>
 );
 type WalletLoadErrorProps = {
   error: Error;
@@ -30,7 +30,7 @@ const toError = (error: unknown): Error => {
   if (error instanceof Error) {
     return error;
   }
-  return new Error('The wallet tools could not be loaded.');
+  return new Error('Wallet failed to load.');
 };
 
 const isMissingWalletConfig = (error: Error): boolean =>
@@ -43,23 +43,23 @@ const isChunkLoadError = (error: Error): boolean =>
 
 const walletLoadMessage = (error: Error): string => {
   if (isMissingWalletConfig(error)) {
-    return 'Wallet configuration is unavailable. Contact the site operator for help.';
+    return 'Wallet setup is missing. Contact the site owner.';
   }
 
   if (isChunkLoadError(error)) {
-    return 'The wallet tools bundle failed to load. Check your connection, then try again.';
+    return 'Wallet failed to load. Check your connection.';
   }
 
-  return 'The wallet tools could not be loaded. Try again later or contact support.';
+  return 'Wallet failed to load. Try again later.';
 };
 
 function WalletLoadError({ error, onRetry }: Readonly<WalletLoadErrorProps>) {
   return (
-    <section className="form wallet-load-error" role="alert">
-      <h2 className="wallet-load-error-title">Wallet tools unavailable</h2>
+    <section className="panel wallet-load-error" role="alert">
+      <h3 className="wallet-load-error-title">Wallet unavailable</h3>
       <p>{walletLoadMessage(error)}</p>
       <button type="button" className="start-button" onClick={onRetry}>
-        Reload and try again
+        Reload
       </button>
     </section>
   );
@@ -148,11 +148,7 @@ const App = ({
   }, [reloadPage, walletAppLoad]);
 
   let walletArea = (
-    <section className="tool-start" aria-label="Start Proof of Audit">
-      <p className="tool-start-copy">
-        Prepare the attestation form and wallet connection when you are ready to
-        issue proof.
-      </p>
+    <section className="tool-start" aria-label="Start">
       <button
         type="button"
         className="start-button"
@@ -185,11 +181,10 @@ const App = ({
       <main className="main-container">
         <section className="intro" aria-labelledby="intro-title">
           <h2 className="intro-title" id="intro-title">
-            Issue on-chain audit attestations
+            Attest an audit
           </h2>
           <p className="intro-copy">
-            Link a GitHub repository, audited commit, and smart contract address
-            to a Verax attestation on Linea.
+            Link an audited GitHub commit to a contract on Linea.
           </p>
         </section>
         {walletArea}

@@ -68,14 +68,14 @@ const COMMIT_HASH_PATTERN = /^[0-9a-f]{40}$/;
 const FORM_FIELDS: readonly FormFieldConfig[] = [
   {
     name: 'repoUrl',
-    label: 'GitHub Repository URL',
+    label: 'Repository',
     type: 'url',
     placeholder: 'https://github.com/owner/repo',
     autoComplete: 'url',
   },
   {
     name: 'commitHash',
-    label: 'Commit Hash',
+    label: 'Commit',
     type: 'text',
     placeholder: '37f8ecd53a64ba2395b7de0a8d7ecb0dbfdced64',
     autoComplete: 'off',
@@ -83,7 +83,7 @@ const FORM_FIELDS: readonly FormFieldConfig[] = [
   },
   {
     name: 'contractAddress',
-    label: 'Smart Contract Address',
+    label: 'Contract',
     type: 'text',
     placeholder: '0x...',
     autoComplete: 'off',
@@ -96,13 +96,13 @@ const validateField = (name: FormFieldName, value: string): string => {
     case 'commitHash':
       return COMMIT_HASH_PATTERN.test(value)
         ? ''
-        : 'Invalid commit hash (40 hex characters expected)';
+        : 'Expected 40 lowercase hex characters';
     case 'repoUrl':
       return isValidGithubRepositoryUrl(value)
         ? ''
-        : 'Invalid GitHub URL (e.g., https://github.com/owner/repo)';
+        : 'Expected https://github.com/owner/repo';
     case 'contractAddress':
-      return isAddress(value) ? '' : 'Invalid Ethereum address';
+      return isAddress(value) ? '' : 'Invalid address';
     default:
       return '';
   }
@@ -119,6 +119,16 @@ const lineaChainLabel = (chainId: number): string => {
     return 'Linea Sepolia';
   }
   return `chain ${chainId}`;
+};
+
+const errorText = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return 'Unexpected error.';
+  }
+  // viem errors carry a one-line summary; their message holds the full trace.
+  return 'shortMessage' in error && typeof error.shortMessage === 'string'
+    ? error.shortMessage
+    : error.message;
 };
 
 type AuditFormFieldProps = FormFieldConfig & {
@@ -257,8 +267,7 @@ const AuditForm = () => {
           setStatus({
             type: 'error',
             origin,
-            errorMessage:
-              'Please switch to Linea Mainnet or Linea Sepolia before issuing an attestation.',
+            errorMessage: 'Switch to a Linea network.',
           });
           return;
         }
@@ -272,8 +281,7 @@ const AuditForm = () => {
           setStatus({
             type: 'error',
             origin,
-            errorMessage:
-              'Connect a wallet on Linea Mainnet or Linea Sepolia before issuing an attestation.',
+            errorMessage: 'Connect a wallet on Linea.',
           });
           return;
         }
@@ -286,8 +294,7 @@ const AuditForm = () => {
           setStatus({
             type: 'error',
             origin,
-            errorMessage:
-              'Could not open a wallet client for the submitting Linea network. Switch to that network and try again.',
+            errorMessage: 'Network unavailable. Switch network and retry.',
           });
           return;
         }
@@ -316,7 +323,7 @@ const AuditForm = () => {
           setStatus({
             type: 'error',
             origin,
-            errorMessage: 'Transaction failed - no hash received',
+            errorMessage: 'No transaction hash returned.',
           });
           return;
         }
@@ -345,7 +352,7 @@ const AuditForm = () => {
             type: 'error',
             txHash: receipt.transactionHash,
             origin: pendingOrigin,
-            errorMessage: 'Transaction failed',
+            errorMessage: 'Transaction failed.',
           });
           return;
         }
@@ -360,7 +367,7 @@ const AuditForm = () => {
             type: 'error',
             txHash: receipt.transactionHash,
             origin: pendingOrigin,
-            errorMessage: 'Could not extract attestation ID from transaction',
+            errorMessage: 'No attestation found in the receipt.',
           });
           return;
         }
@@ -378,11 +385,7 @@ const AuditForm = () => {
           },
         });
       } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : 'An unexpected error occurred';
-        setStatus({ type: 'error', origin, errorMessage });
+        setStatus({ type: 'error', origin, errorMessage: errorText(error) });
       } finally {
         inFlightRef.current = false;
       }
@@ -394,28 +397,35 @@ const AuditForm = () => {
     errors.commitHash || errors.repoUrl || errors.contractAddress,
   );
   const isEmpty = !commitHash || !repoUrl || !contractAddress;
-  const transactionStatusClass =
-    status.type === 'error' ? 'error' : status.type;
+  const isPending = status.type === 'pending';
 
   const isSubmitDisabled =
-    !address ||
-    !veraxSdk ||
-    !isValidChain ||
-    hasErrors ||
-    isEmpty ||
-    status.type === 'pending';
+    !address || !veraxSdk || !isValidChain || hasErrors || isEmpty || isPending;
+
+  const { origin } = status;
+  const isOtherWallet =
+    origin !== undefined &&
+    (address !== origin.account || chainId !== origin.chainId);
+  let resultTitle: string | null = null;
+  if (status.type === 'success') {
+    resultTitle = 'Attested';
+  } else if (isPending && status.txHash) {
+    resultTitle = 'Confirming…';
+  }
 
   return (
     <>
-      <ConnectButton />
+      <div className="wallet-bar">
+        <ConnectButton />
+      </div>
 
       {address && !isValidChain ? (
-        <div className="status-message error" role="alert">
-          Please switch to Linea Mainnet or Linea Sepolia
-        </div>
+        <p className="notice error" role="alert">
+          Switch to a Linea network.
+        </p>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="form" noValidate>
+      <form onSubmit={handleSubmit} className="panel form" noValidate>
         {FORM_FIELDS.map((field) => (
           <AuditFormField
             key={field.name}
@@ -430,73 +440,67 @@ const AuditForm = () => {
         <button
           type="submit"
           disabled={isSubmitDisabled}
-          className={`submit-button ${status.type === 'pending' ? 'loading' : ''}`}
-          aria-busy={status.type === 'pending'}
+          className="submit-button"
+          aria-busy={isPending}
         >
-          {status.type === 'pending' ? 'Issuing...' : 'Issue Attestation'}
+          {isPending ? 'Attesting…' : 'Attest'}
         </button>
       </form>
 
-      {status.txHash && status.origin?.txExplorerUrl ? (
-        <div
-          className={`status-message ${transactionStatusClass}`}
+      {status.txHash && origin?.txExplorerUrl ? (
+        <section
+          className="panel result"
           role="status"
           aria-live="polite"
+          aria-label="Result"
         >
-          Transaction:{' '}
-          <a
-            href={status.origin.txExplorerUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {truncateHexString(status.txHash)}
-          </a>
-        </div>
-      ) : null}
-
-      {status.type === 'pending' && status.txHash ? (
-        <div
-          className="status-message pending"
-          role="status"
-          aria-live="polite"
-        >
-          Waiting for confirmation...
-        </div>
-      ) : null}
-
-      {status.type === 'success' &&
-      status.attestationId &&
-      status.origin?.attestationExplorerUrl ? (
-        <div
-          className="status-message success"
-          role="status"
-          aria-live="polite"
-        >
-          Attestation ID:{' '}
-          <a
-            href={status.origin.attestationExplorerUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {truncateHexString(status.attestationId)}
-          </a>
-        </div>
-      ) : null}
-
-      {status.origin &&
-      (address !== status.origin.account ||
-        chainId !== status.origin.chainId) ? (
-        <div className="status-message notice" role="status">
-          This result belongs to the submitting account {status.origin.account}{' '}
-          on {lineaChainLabel(status.origin.chainId)}. The connected account or
-          network has changed.
-        </div>
+          {resultTitle ? (
+            <p className={`result-title ${status.type}`}>{resultTitle}</p>
+          ) : null}
+          <dl className="result-rows">
+            <dt>Transaction</dt>
+            <dd>
+              <a
+                href={origin.txExplorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {truncateHexString(status.txHash)}
+              </a>
+            </dd>
+            {status.type === 'success' &&
+            status.attestationId &&
+            origin.attestationExplorerUrl ? (
+              <>
+                <dt>Attestation</dt>
+                <dd>
+                  <a
+                    href={origin.attestationExplorerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {truncateHexString(status.attestationId)}
+                  </a>
+                </dd>
+              </>
+            ) : null}
+            {isOtherWallet ? (
+              <>
+                <dt>Sent by</dt>
+                <dd title={origin.account}>
+                  {truncateHexString(origin.account)} on{' '}
+                  {lineaChainLabel(origin.chainId)}
+                </dd>
+              </>
+            ) : null}
+          </dl>
+        </section>
       ) : null}
 
       {status.type === 'error' && status.errorMessage ? (
-        <div className="status-message error" role="alert">
+        <p className="notice error" role="alert">
           {status.errorMessage}
-        </div>
+        </p>
       ) : null}
     </>
   );
