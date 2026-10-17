@@ -249,7 +249,7 @@ try {
       cdp,
       `({ alert: document.querySelector('[role="alert"]')?.innerText, body: document.body.innerText.slice(-700), footer: Boolean(document.querySelector('footer')), walletChunk: performance.getEntriesByType('resource').some(e => e.name.includes('WalletApp-')), unhandled: window.__walletUnhandled ?? [] })`,
     );
-    if (!outcome.alert?.includes('Wallet configuration is unavailable')) {
+    if (!outcome.alert?.includes('Wallet setup is missing')) {
       throw new Error(
         `Missing-config build did not expose the expected accessible error: ${JSON.stringify(outcome)}`,
       );

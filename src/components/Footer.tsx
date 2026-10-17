@@ -32,7 +32,7 @@ const Footer = () => {
     <footer className="footer">
       <div className="footer-content">
         <p className="copyright">
-          Made with <span aria-label="love">❤️</span> by{' '}
+          By{' '}
           <a
             href="https://alainnicolas.fr/en/"
             target="_blank"
@@ -65,7 +65,7 @@ const Footer = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="footer-link"
-            aria-label="View my X profile"
+            aria-label="X profile"
           >
             <XIcon />
           </a>

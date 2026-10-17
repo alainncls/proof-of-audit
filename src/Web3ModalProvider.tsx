@@ -35,6 +35,10 @@ createAppKit({
     59141: LineaSepoliaIcon,
   },
   themeMode: 'dark',
+  themeVariables: {
+    '--w3m-accent': '#a4af63',
+    '--w3m-border-radius-master': '2px',
+  },
 });
 
 interface Web3ModalProviderProps {

@@ -4,11 +4,11 @@ import App from './App.tsx';
 
 const WalletAppMock = () => (
   <form aria-label="Audit attestation">
-    <label htmlFor="repoUrl">GitHub Repository URL</label>
+    <label htmlFor="repoUrl">Repository</label>
     <input id="repoUrl" name="repoUrl" />
-    <label htmlFor="commitHash">Commit Hash</label>
+    <label htmlFor="commitHash">Commit</label>
     <input id="commitHash" name="commitHash" />
-    <label htmlFor="contractAddress">Smart Contract Address</label>
+    <label htmlFor="contractAddress">Contract</label>
     <input id="contractAddress" name="contractAddress" />
     <button type="button">Connect wallet</button>
   </form>
@@ -51,7 +51,7 @@ describe('App wallet loading', () => {
     expect(
       await screen.findByRole('button', { name: 'Connect wallet' }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Commit Hash')).toBeInTheDocument();
+    expect(screen.getByLabelText('Commit')).toBeInTheDocument();
   });
 
   it('renders the wallet app when the chunk resolves after a delay', async () => {
@@ -92,9 +92,7 @@ describe('App wallet loading', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/connection/i);
     shouldFail = false;
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Reload and try again' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Reload' }));
     expect(
       await screen.findByRole('button', { name: 'Connect wallet' }),
     ).toBeInTheDocument();
@@ -126,7 +124,7 @@ describe('App wallet loading', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start attestation' }));
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('Wallet configuration is unavailable.');
+    expect(alert).toHaveTextContent('Wallet setup is missing.');
     expect(alert).not.toHaveTextContent('VITE_WALLETCONNECT_PROJECT_ID');
     expect(alert).not.toHaveTextContent('A project id is not invented here.');
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
