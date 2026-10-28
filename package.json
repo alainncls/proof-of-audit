@@ -47,17 +47,9 @@
     "vite": "8.3.4",
     "vitest": "5.0.5"
   },
-  "overrides": {
-    "zod": "4.6.6",
-    "@base-org/account": "2.5.13",
-    "@graphql-tools/utils": "12.0.3",
-    "@fastify/busboy": "3.2.2",
-    "@graphql-tools/executor-legacy-ws": "1.1.37",
-    "source-map-js": "1.2.2",
-    "fast-uri@<2.4.8": "2.4.8",
-    "fast-uri@>=3.0.0 <3.1.9": "3.1.9"
-  },
   "engines": {
-    "node": "24.22.1"
-  }
+    "node": "24.22.1",
+    "pnpm": "12.16.1"
+  },
+  "packageManager": "pnpm@12.16.1"
 }
