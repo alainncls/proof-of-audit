@@ -101,7 +101,7 @@ src/
 ### Prerequisites
 
 - **Node.js** 24.22.1 (see [`.nvmrc`](.nvmrc) or use `nvm use`)
-- **npm** (comes with Node.js)
+- **pnpm** 12.16.1 (enabled through Corepack)
 - A WalletConnect Project ID
 
 ### Environment Variables
@@ -121,26 +121,26 @@ cp .env.example .env
 
 ```bash
 # Install dependencies
-npm install
+corepack pnpm install
 
 # Start development server
-npm run dev
+corepack pnpm dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Available Scripts
 
-| Script               | Description                    |
-| -------------------- | ------------------------------ |
-| `npm run dev`        | Start development server       |
-| `npm run build`      | Build for production           |
-| `npm run preview`    | Preview production build       |
-| `npm run lint`       | Run ESLint                     |
-| `npm run lint:fix`   | Fix ESLint errors              |
-| `npm run format`     | Check formatting with Prettier |
-| `npm run format:fix` | Format code with Prettier      |
-| `npm run typecheck`  | Run TypeScript type checking   |
+| Script            | Description                    |
+| ----------------- | ------------------------------ |
+| `pnpm dev`        | Start development server       |
+| `pnpm build`      | Build for production           |
+| `pnpm preview`    | Preview production build       |
+| `pnpm lint`       | Run ESLint                     |
+| `pnpm lint:fix`   | Fix ESLint errors              |
+| `pnpm format`     | Check formatting with Prettier |
+| `pnpm format:fix` | Format code with Prettier      |
+| `pnpm typecheck`  | Run TypeScript type checking   |
 
 ---
 

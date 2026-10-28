@@ -6,4 +6,4 @@
 - Current upstream resolution without override: `@base-org/account@2.4.0` nested under `@reown/appkit-utils`, leaving the `@wagmi/connectors` peer unmet.
 - Override target: `@base-org/account@2.5.13`.
 - Remaining risk: this bridges an upstream peer mismatch. Remove it when the Reown package aligns its dependency.
-- Validation: run `npm ls --all`, `npm run lint`, `npm run typecheck`, and `npm run build` after any change.
+- Validation: run `pnpm why @base-org/account`, `pnpm run lint`, `pnpm run typecheck`, and `pnpm run build` after any change.
