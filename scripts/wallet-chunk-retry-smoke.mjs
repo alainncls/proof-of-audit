@@ -180,6 +180,7 @@ try {
   await cdp.ready;
 
   let failureInjected = false;
+  let blockWalletChunkRequests = !expectMissingConfig;
   let walletChunkRequests = 0;
   const externalRequests = [];
   const walletChunkUrls = [];
@@ -188,20 +189,17 @@ try {
     loadEvents += 1;
   });
   cdp.on('Fetch.requestPaused', async (request) => {
-    if (
-      !expectMissingConfig &&
-      request.request.url.includes('WalletApp-') &&
-      !failureInjected
-    ) {
-      failureInjected = true;
+    if (request.request.url.includes('WalletApp-')) {
       walletChunkRequests += 1;
-      await cdp.send('Fetch.failRequest', {
-        requestId: request.requestId,
-        errorReason: 'Failed',
-      });
-      return;
+      if (blockWalletChunkRequests) {
+        failureInjected = true;
+        await cdp.send('Fetch.failRequest', {
+          requestId: request.requestId,
+          errorReason: 'Failed',
+        });
+        return;
+      }
     }
-    if (request.request.url.includes('WalletApp-')) walletChunkRequests += 1;
     await cdp.send('Fetch.continueRequest', { requestId: request.requestId });
   });
   cdp.on('Network.requestWillBeSent', ({ request }) => {
@@ -282,14 +280,26 @@ try {
       ),
     );
   } else {
-    await waitForDom(
-      cdp,
-      `document.querySelector('[role="alert"]')?.textContent?.includes('wallet tools bundle failed to load')`,
-      'accessible chunk failure state',
-    );
+    try {
+      await waitForDom(
+        cdp,
+        `document.querySelector('[role="alert"]')?.textContent?.includes('Wallet failed to load. Check your connection.')`,
+        'accessible chunk failure state',
+      );
+    } catch (error) {
+      const diagnostic = await evaluate(
+        cdp,
+        `({ alert: document.querySelector('[role="alert"]')?.innerText, body: document.body.innerText.slice(-700), walletChunkRequests: performance.getEntriesByType('resource').filter(e => e.name.includes('WalletApp-')).map(e => e.name), unhandled: window.__walletUnhandled ?? [] })`,
+      );
+      throw new Error(
+        `Wallet chunk failure state was not rendered: ${JSON.stringify(diagnostic)}`,
+        { cause: error },
+      );
+    }
     if (!failureInjected)
       throw new Error('The browser did not request the lazy wallet chunk');
 
+    blockWalletChunkRequests = false;
     const beforeRetryLoads = loadEvents;
     await evaluate(
       cdp,
