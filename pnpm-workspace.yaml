@@ -10,5 +10,8 @@ overrides:
   '@fastify/busboy': 3.2.2
   '@graphql-tools/executor-legacy-ws': 1.1.37
   source-map-js: 1.2.2
+  # GHSA-mrwp-f3q8-3g9p: axios' broad range still selects the vulnerable
+  # 1.16.1 release through AppKit and Verax. Pin the first patched release.
+  follow-redirects: 1.16.2
   fast-uri@<2.4.8: 2.4.8
   fast-uri@>=3.0.0 <3.1.9: 3.1.9
