@@ -100,7 +100,7 @@ src/
 
 ### Prerequisites
 
-- **Node.js** 24.22.1 (see [`.nvmrc`](.nvmrc) or use `nvm use`)
+- **Node.js** 24.22.3 (see [`.nvmrc`](.nvmrc) or use `nvm use`)
 - **pnpm** 12.16.1 (enabled through Corepack)
 - A WalletConnect Project ID
 
